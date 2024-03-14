@@ -17,7 +17,7 @@ namespace HexTecGames.Editor.BuildHelper
         [Tooltip("Scenes to be added to the Build")]
         public List<SceneOrder> scenes;
 
-        public List<PlatformSettings> platformSettings;      
+        public List<PlatformSettings> platformSettings;
 
         public BuildOptions options;
 
@@ -25,6 +25,7 @@ namespace HexTecGames.Editor.BuildHelper
 
         public VersionType version;
 
+        private string lastPath;
 
         private void OnValidate()
         {
@@ -32,7 +33,7 @@ namespace HexTecGames.Editor.BuildHelper
             {
                 platformSetting.OnValidate();
             }
-        }    
+        }
 
         [ContextMenu("Build All")]
         public void BuildAll()
@@ -58,19 +59,23 @@ namespace HexTecGames.Editor.BuildHelper
                 }
                 CopyFolders(platformSetting.storeSettings);
                 RunExternalScript(platformSetting.storeSettings);
-            }           
+            }
+            if (!string.IsNullOrEmpty(lastPath))
+            {
+                Process.Start(lastPath);
+            }
+
         }
         private void Build(PlatformSettings platformSetting, StoreSettings storeSetting)
         {
             BuildReport report = BuildPlatform(platformSetting, storeSetting);
             BuildSummary summary = report.summary;
-
             if (summary.result == BuildResult.Succeeded)
             {
                 Debug.Log("Build succeeded: " + summary.totalSize + " bytes");
+                lastPath = summary.outputPath;
             }
-
-            if (summary.result == BuildResult.Failed)
+            else if (summary.result == BuildResult.Failed)
             {
                 Debug.Log("Build failed");
             }
@@ -105,7 +110,7 @@ namespace HexTecGames.Editor.BuildHelper
             }
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
             buildPlayerOptions.scenes = GetSceneNames(platformSetting, storeSetting).ToArray();
-            buildPlayerOptions.locationPathName = GetFullPath(platformSetting);
+            buildPlayerOptions.locationPathName = GetFullPath(platformSetting, storeSetting);
             buildPlayerOptions.target = platformSetting.buildTarget;
             buildPlayerOptions.options = options;
 
@@ -186,9 +191,16 @@ namespace HexTecGames.Editor.BuildHelper
                 }
             }
         }
-        private string GetFullPath(PlatformSettings setting)
+        private string GetFullPath(PlatformSettings platformSetting, StoreSettings storeSetting)
         {
-            return Path.Combine(GetLocationPath(setting), GetFileName(setting));
+            string fileName;
+            if (version == VersionType.Demo)
+            {
+                fileName = $"{GetFileName(platformSetting)}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}_demo";
+            }
+            else fileName = $"{GetFileName(platformSetting)}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}";
+
+            return Path.Combine(GetLocationPath(platformSetting), fileName);
         }
         private string GetFileName(PlatformSettings setting)
         {
