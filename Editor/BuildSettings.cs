@@ -2,23 +2,22 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-namespace HexTecGames.Basics.Editor.BuildHelper
+namespace HexTecGames.Editor.BuildHelper
 {
 
-    //[CreateAssetMenu(menuName = "HecTec/BuildSettings")]
+    [CreateAssetMenu(fileName = "BuildSettings", menuName = "HexTecGames/Editor/BuildSettings")]
     public class BuildSettings : ScriptableObject
     {
         [Tooltip("Scenes to be added to the Build")]
-        public List<SceneAsset> scenes;
+        public List<SceneOrder> scenes;
 
-        public List<PlatformSettings> platformSettings;
-        [Tooltip("Can be used to deactive specific gameObjects or to copy the builds into another folder")]
-        public List<StoreSettings> storeSettings;
+        public List<PlatformSettings> platformSettings;      
 
         public BuildOptions options;
 
@@ -33,14 +32,12 @@ namespace HexTecGames.Basics.Editor.BuildHelper
             {
                 platformSetting.OnValidate();
             }
-        }
+        }    
 
         [ContextMenu("Build All")]
         public void BuildAll()
         {
-            VersionData.IncreaseVersion(updateType);
-            VersionData.CurrentVersionType = version;
-
+            VersionNumber.IncreaseVersion(updateType);
 
             foreach (var platformSetting in platformSettings)
             {
@@ -49,19 +46,19 @@ namespace HexTecGames.Basics.Editor.BuildHelper
                     Debug.Log($"Skipped {platformSetting.buildTarget} since it is not included");
                     continue;
                 }
-                foreach (var storeSetting in storeSettings)
+                foreach (var storeSetting in platformSetting.storeSettings)
                 {
                     if (!storeSetting.include)
                     {
                         Debug.Log($"Skipped {storeSetting.name} since it is not included");
                         continue;
                     }
-                    ApplyStoreSettings(storeSetting);
+                    ApplyStoreSettings(storeSetting, platformSetting.storeSettings);
                     Build(platformSetting, storeSetting);
                 }
-            }
-            CopyFolders(storeSettings);
-            RunExternalScript();
+                CopyFolders(platformSetting.storeSettings);
+                RunExternalScript(platformSetting.storeSettings);
+            }           
         }
         private void Build(PlatformSettings platformSetting, StoreSettings storeSetting)
         {
@@ -77,8 +74,8 @@ namespace HexTecGames.Basics.Editor.BuildHelper
             {
                 Debug.Log("Build failed");
             }
-        }    
-        private void ApplyStoreSettings(StoreSettings targetSetting)
+        }
+        private void ApplyStoreSettings(StoreSettings targetSetting, List<StoreSettings> storeSettings)
         {
             if (storeSettings == null)
             {
@@ -100,23 +97,22 @@ namespace HexTecGames.Basics.Editor.BuildHelper
                 }
             }
         }
-        private BuildReport BuildPlatform(PlatformSettings platformSettings, StoreSettings storeSettings)
+        private BuildReport BuildPlatform(PlatformSettings platformSetting, StoreSettings storeSetting)
         {
-            if (platformSettings.buildTarget == BuildTarget.NoTarget)
+            if (platformSetting.buildTarget == BuildTarget.NoTarget)
             {
                 Debug.LogError("No build target selected");
             }
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
-            buildPlayerOptions.scenes = GetSceneNames(storeSettings).ToArray();
-            buildPlayerOptions.locationPathName = GetFullPath(platformSettings);
-            buildPlayerOptions.target = platformSettings.buildTarget;
+            buildPlayerOptions.scenes = GetSceneNames(platformSetting, storeSetting).ToArray();
+            buildPlayerOptions.locationPathName = GetFullPath(platformSetting);
+            buildPlayerOptions.target = platformSetting.buildTarget;
             buildPlayerOptions.options = options;
 
             return BuildPipeline.BuildPlayer(buildPlayerOptions);
-
         }
 
-        private void RunExternalScript()
+        private void RunExternalScript(List<StoreSettings> storeSettings)
         {
             StoreSettings activeSetting = storeSettings.Find(x => x.include);
             if (activeSetting == null)
@@ -206,23 +202,25 @@ namespace HexTecGames.Basics.Editor.BuildHelper
             return path;
 
         }
-        private List<string> GetSceneNames(StoreSettings setting)
+        private List<string> GetSceneNames(PlatformSettings platformSetting, StoreSettings storeSetting)
         {
             List<string> sceneNames = new List<string>();
             sceneNames.AddRange(GetSceneNames(scenes));
-            sceneNames.AddRange(GetSceneNames(setting.extraScenes));
+            sceneNames.AddRange(GetSceneNames(storeSetting.extraScenes));
+            sceneNames.AddRange(GetSceneNames(platformSetting.extraScenes));
             return sceneNames;
         }
-        private List<string> GetSceneNames(List<SceneAsset> scenes)
+        private List<string> GetSceneNames(List<SceneOrder> sceneOrders)
         {
             List<string> sceneNames = new List<string>();
-            if (scenes == null)
+            if (sceneOrders == null)
             {
                 return sceneNames;
             }
-            foreach (var scene in scenes)
+            sceneOrders = sceneOrders.OrderBy(x => x.order).ToList();
+            foreach (var sceneOrder in sceneOrders)
             {
-                sceneNames.Add("Assets/Scenes/" + scene.name + ".unity");
+                sceneNames.Add("Assets/Scenes/" + sceneOrder.scene.name + ".unity");
             }
             return sceneNames;
         }

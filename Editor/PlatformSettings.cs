@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace HexTecGames.Basics.Editor.BuildHelper
+namespace HexTecGames.Editor.BuildHelper
 {
 	[System.Serializable]
 	public class PlatformSettings
@@ -13,8 +13,10 @@ namespace HexTecGames.Basics.Editor.BuildHelper
         [Tooltip("File ending of executable, e.g.: (Windows:.exe, Linux:.x86_64 or empty for OSX")]
         public string fileEnding;
         public BuildTarget buildTarget;
-
-        
+        [Tooltip("Scenes to only be added for this Platform")]
+        public List<SceneOrder> extraScenes;
+        [Tooltip("Can be used to deactive specific gameObjects or to copy the builds into another folder")]
+        public List<StoreSettings> storeSettings;
 
         private BuildTarget lastBuildTarget;
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace HexTecGames.Basics.Editor.BuildHelper
+namespace HexTecGames.Editor.BuildHelper
 {
 	[System.Serializable]
 	public class StoreSettings
@@ -12,7 +12,7 @@ namespace HexTecGames.Basics.Editor.BuildHelper
 		public string name;
 
         [Tooltip("Scenes that will only be added to this specific Build")]
-        public List<SceneAsset> extraScenes;
+        public List<SceneOrder> extraScenes;
 
         [Tooltip("Objects that will only be included when this is Setting is active")]
         public List<Object> exclusiveObjects;
