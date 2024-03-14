@@ -216,11 +216,12 @@ namespace HexTecGames.Editor.BuildHelper
         }
         private List<string> GetSceneNames(PlatformSettings platformSetting, StoreSettings storeSetting)
         {
-            List<string> sceneNames = new List<string>();
-            sceneNames.AddRange(GetSceneNames(scenes));
-            sceneNames.AddRange(GetSceneNames(storeSetting.extraScenes));
-            sceneNames.AddRange(GetSceneNames(platformSetting.extraScenes));
-            return sceneNames;
+            List<SceneOrder> sceneOrders = new List<SceneOrder>();
+            sceneOrders.AddRange(scenes);
+            sceneOrders.AddRange(storeSetting.extraScenes);
+            sceneOrders.AddRange(platformSetting.extraScenes);
+
+            return GetSceneNames(sceneOrders);
         }
         private List<string> GetSceneNames(List<SceneOrder> sceneOrders)
         {
