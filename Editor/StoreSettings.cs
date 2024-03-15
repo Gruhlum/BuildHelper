@@ -1,3 +1,4 @@
+using HexTecGames.Basics;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
@@ -10,6 +11,8 @@ namespace HexTecGames.Editor.BuildHelper
 	{
 		public bool include = true;
 		public string name;
+        [HideInInspector] public bool isWebGL;
+        [DrawIf(nameof(isWebGL), true)] public string webGLTemplate = "Default";
 
         [Tooltip("Scenes that will only be added to this specific Build")]
         public List<SceneOrder> extraScenes;

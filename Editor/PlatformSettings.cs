@@ -1,3 +1,4 @@
+using HexTecGames.Basics;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
@@ -12,7 +13,7 @@ namespace HexTecGames.Editor.BuildHelper
         public bool include = true;
         [Tooltip("File ending of executable, e.g.: (Windows:.exe, Linux:.x86_64 or empty for OSX")]
         public string fileEnding;
-        public BuildTarget buildTarget;
+        public BuildTarget buildTarget;       
         [Tooltip("Scenes to only be added for this Platform")]
         public List<SceneOrder> extraScenes;
         [Tooltip("Can be used to deactive specific gameObjects or to copy the builds into another folder")]
@@ -23,6 +24,14 @@ namespace HexTecGames.Editor.BuildHelper
         public void OnValidate()
         {
             CheckFileEnding();
+            foreach (var storeSetting in storeSettings)
+            {
+                if (buildTarget == BuildTarget.WebGL)
+                {
+                    storeSetting.isWebGL = true;
+                }
+                else storeSetting.isWebGL = false;
+            }
         }
 
         private void CheckFileEnding()

@@ -1,3 +1,4 @@
+using HexTecGames.Basics;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -80,11 +81,30 @@ namespace HexTecGames.Editor.BuildHelper
                 Debug.Log("Build failed");
             }
         }
+        private BuildReport BuildPlatform(PlatformSettings platformSetting, StoreSettings storeSetting)
+        {
+            if (platformSetting.buildTarget == BuildTarget.NoTarget)
+            {
+                Debug.LogError("No build target selected");
+            }
+            BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
+            buildPlayerOptions.scenes = GetSceneNames(platformSetting, storeSetting).ToArray();
+            buildPlayerOptions.locationPathName = GetFullPath(platformSetting, storeSetting);
+            buildPlayerOptions.target = platformSetting.buildTarget;
+            buildPlayerOptions.options = options;
+
+            return BuildPipeline.BuildPlayer(buildPlayerOptions);
+        }
+
         private void ApplyStoreSettings(StoreSettings targetSetting, List<StoreSettings> storeSettings)
         {
             if (storeSettings == null)
             {
                 return;
+            }
+            if (targetSetting.isWebGL)
+            {
+                PlayerSettings.WebGL.template = "APPLICATION:" + targetSetting.webGLTemplate;
             }
             foreach (var storeSetting in storeSettings)
             {
@@ -101,20 +121,6 @@ namespace HexTecGames.Editor.BuildHelper
                     else go.hideFlags = HideFlags.DontSaveInBuild;
                 }
             }
-        }
-        private BuildReport BuildPlatform(PlatformSettings platformSetting, StoreSettings storeSetting)
-        {
-            if (platformSetting.buildTarget == BuildTarget.NoTarget)
-            {
-                Debug.LogError("No build target selected");
-            }
-            BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
-            buildPlayerOptions.scenes = GetSceneNames(platformSetting, storeSetting).ToArray();
-            buildPlayerOptions.locationPathName = GetFullPath(platformSetting, storeSetting);
-            buildPlayerOptions.target = platformSetting.buildTarget;
-            buildPlayerOptions.options = options;
-
-            return BuildPipeline.BuildPlayer(buildPlayerOptions);
         }
 
         private void RunExternalScript(List<StoreSettings> storeSettings)
