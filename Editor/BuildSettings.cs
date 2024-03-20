@@ -15,16 +15,14 @@ namespace HexTecGames.Editor.BuildHelper
     [CreateAssetMenu(fileName = "BuildSettings", menuName = "HexTecGames/Editor/BuildSettings")]
     public class BuildSettings : ScriptableObject
     {
+        public VersionType version;
+        public UpdateType updateType;
+        public BuildOptions options;
+
         [Tooltip("Scenes to be added to the Build")]
         public List<SceneOrder> scenes;
 
         public List<PlatformSettings> platformSettings;
-
-        public BuildOptions options;
-
-        public UpdateType updateType;
-
-        public VersionType version;
 
         private string lastPath;
 
@@ -40,6 +38,7 @@ namespace HexTecGames.Editor.BuildHelper
         public void BuildAll()
         {
             VersionNumber.IncreaseVersion(updateType);
+            updateType = UpdateType.None;
 
             foreach (var platformSetting in platformSettings)
             {

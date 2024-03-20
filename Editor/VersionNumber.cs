@@ -58,9 +58,12 @@ namespace HexTecGames.Editor.BuildHelper
                     break;
                 case UpdateType.Medium:
                     Medium++;
+                    Minor = 0;
                     break;
                 case UpdateType.Major:
                     Major++;
+                    Medium = 0;
+                    Minor = 0;
                     break;
                 default:
                     break;
