@@ -40,9 +40,10 @@ namespace HexTecGames.Editor.BuildHelper
         {
             VersionNumber.IncreaseVersion(updateType);
             updateType = UpdateType.None;
-
+            
             foreach (var platformSetting in platformSettings)
             {
+                lastPath = GetLocationPath(platformSetting);
                 if (!platformSetting.include)
                 {
                     Debug.Log($"Skipped {platformSetting.buildTarget} since it is not included");
@@ -80,8 +81,7 @@ namespace HexTecGames.Editor.BuildHelper
             BuildSummary summary = report.summary;
             if (summary.result == BuildResult.Succeeded)
             {
-                Debug.Log("Build succeeded: " + summary.totalSize + " bytes");
-                lastPath = summary.outputPath;
+                Debug.Log("Build succeeded: " + summary.totalSize + " bytes");               
                 if (storeSetting.isWebGL && storeSetting.createZip)
                 {
                     CreateZipFile(summary.outputPath);
