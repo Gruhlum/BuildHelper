@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
@@ -64,7 +65,14 @@ namespace HexTecGames.Editor.BuildHelper
             {
                 Process.Start(lastPath);
             }
+        }
 
+        private void CreateZipFile(string path)
+        {
+            string fileName = Path.GetFileName(path);
+            string pathWithoutFileName = Path.GetDirectoryName(path);
+            Debug.Log(fileName + " - " + pathWithoutFileName + " - " + path);
+            ZipFile.CreateFromDirectory(path, Path.Combine(pathWithoutFileName, fileName + ".zip"));
         }
         private void Build(PlatformSettings platformSetting, StoreSettings storeSetting)
         {
@@ -74,6 +82,10 @@ namespace HexTecGames.Editor.BuildHelper
             {
                 Debug.Log("Build succeeded: " + summary.totalSize + " bytes");
                 lastPath = summary.outputPath;
+                if (storeSetting.isWebGL && storeSetting.createZip)
+                {
+                    CreateZipFile(summary.outputPath);
+                }
             }
             else if (summary.result == BuildResult.Failed)
             {
