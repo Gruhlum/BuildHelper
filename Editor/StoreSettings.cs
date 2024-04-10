@@ -18,8 +18,8 @@ namespace HexTecGames.Editor.BuildHelper
         [Tooltip("Scenes that will only be added to this specific Build")]
         public List<SceneOrder> extraScenes;
 
-        [Tooltip("Objects that will only be included when this is Setting is active")]
-        public List<Object> exclusiveObjects;
+        [Tooltip("Objects that will only be included/exluded for this Store")]
+        public List<ObjectFilter> exclusiveObjects;
 
         [Tooltip("Used to copy the build folders to another location")]
         public List<FolderCopyLocation> copyFolders;

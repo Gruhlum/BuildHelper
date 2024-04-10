@@ -16,6 +16,8 @@ namespace HexTecGames.Editor.BuildHelper
         public BuildTarget buildTarget;       
         [Tooltip("Scenes to only be added for this Platform")]
         public List<SceneOrder> extraScenes;
+        [Tooltip("Objects that will only be included/exluded for this Platform")]
+        public List<ObjectFilter> exclusiveObjects;
         [Tooltip("Can be used to deactive specific gameObjects or to copy the builds into another folder")]
         public List<StoreSettings> storeSettings;
 

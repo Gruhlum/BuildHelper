@@ -57,6 +57,7 @@ namespace HexTecGames.Editor.BuildHelper
                         continue;
                     }
                     ApplyStoreSettings(storeSetting, platformSetting.storeSettings);
+                    ApplyObjectFilters(platformSetting, storeSetting);
                     Build(platformSetting, storeSetting);
                 }
                 CopyFolders(platformSetting.storeSettings);
@@ -117,23 +118,48 @@ namespace HexTecGames.Editor.BuildHelper
             {
                 PlayerSettings.WebGL.template = "APPLICATION:" + targetSetting.webGLTemplate;
             }
-            foreach (var storeSetting in storeSettings)
+        }
+        private void ApplyObjectFilters(PlatformSettings activePlatform, StoreSettings activeStore)
+        {
+            foreach (var platform in platformSettings)
             {
-                if (storeSetting.exclusiveObjects == null)
+                foreach (var obj in platform.exclusiveObjects)
                 {
-                    continue;
-                }
-                foreach (var go in storeSetting.exclusiveObjects)
-                {
-                    if (storeSetting == targetSetting)
+                    if (obj.mode == ObjectFilter.Mode.Include && platform == activePlatform)
                     {
-                        go.hideFlags = HideFlags.None;
+                        obj.item.hideFlags = HideFlags.None;
                     }
-                    else go.hideFlags = HideFlags.DontSaveInBuild;
+                    else if (obj.mode == ObjectFilter.Mode.Exclude && platform != activePlatform)
+                    {
+                        obj.item.hideFlags = HideFlags.None;
+                    }
+                    else
+                    {
+                        obj.item.hideFlags = HideFlags.DontSaveInBuild;
+                        Debug.Log($"Exluded object: {obj.item.name} from: {activePlatform}, {activeStore}");
+                    } 
+                }
+                foreach (var store in platform.storeSettings)
+                {
+                    foreach (var obj in store.exclusiveObjects)
+                    {
+                        if (obj.mode == ObjectFilter.Mode.Include && store == activeStore)
+                        {
+                            obj.item.hideFlags = HideFlags.None;
+                        }
+                        else if (obj.mode == ObjectFilter.Mode.Exclude && store != activeStore)
+                        {
+                            obj.item.hideFlags = HideFlags.None;
+                        }
+                        else
+                        {
+                            obj.item.hideFlags = HideFlags.DontSaveInBuild;
+                            Debug.Log($"Exluded object: {obj.item.name} from: {activePlatform}, {activeStore}");
+                        } 
+                    }
                 }
             }
         }
-
         private void RunExternalScript(List<StoreSettings> storeSettings)
         {
             StoreSettings activeSetting = storeSettings.Find(x => x.include);
