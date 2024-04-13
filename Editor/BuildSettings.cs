@@ -40,7 +40,7 @@ namespace HexTecGames.Editor.BuildHelper
         {
             VersionNumber.IncreaseVersion(updateType);
             updateType = UpdateType.None;
-            
+
             foreach (var platformSetting in platformSettings)
             {
                 lastPath = GetLocationPath(platformSetting);
@@ -82,7 +82,7 @@ namespace HexTecGames.Editor.BuildHelper
             BuildSummary summary = report.summary;
             if (summary.result == BuildResult.Succeeded)
             {
-                Debug.Log("Build succeeded: " + summary.totalSize + " bytes");               
+                Debug.Log("Build succeeded: " + summary.totalSize + " bytes");
                 if (storeSetting.isWebGL && storeSetting.createZip)
                 {
                     CreateZipFile(summary.outputPath);
@@ -116,9 +116,27 @@ namespace HexTecGames.Editor.BuildHelper
             }
             if (targetSetting.isWebGL)
             {
-                PlayerSettings.WebGL.template = "APPLICATION:" + targetSetting.webGLTemplate;
+                List<string> results = GetAllFolderNames("Assets");
+                if (results.Contains(targetSetting.webGLTemplate))
+                {
+                    PlayerSettings.WebGL.template = "PROJECT:" + targetSetting.webGLTemplate;
+                }
+                else PlayerSettings.WebGL.template = "APPLICATION:" + targetSetting.webGLTemplate;
             }
         }
+
+        private List<string> GetAllFolderNames(string startFolder)
+        {
+            List<string> folderNames = new List<string>();
+            var results = AssetDatabase.GetSubFolders(startFolder);
+            folderNames.AddRange(results);
+            foreach (var result in results)
+            {
+                folderNames.AddRange(GetAllFolderNames(result));
+            }
+            return folderNames;
+        }
+
         private void ApplyObjectFilters(PlatformSettings activePlatform, StoreSettings activeStore)
         {
             foreach (var platform in platformSettings)
@@ -137,7 +155,7 @@ namespace HexTecGames.Editor.BuildHelper
                     {
                         obj.item.hideFlags = HideFlags.DontSaveInBuild;
                         Debug.Log($"Exluded object: {obj.item.name} from: {activePlatform}, {activeStore}");
-                    } 
+                    }
                 }
                 foreach (var store in platform.storeSettings)
                 {
@@ -155,7 +173,7 @@ namespace HexTecGames.Editor.BuildHelper
                         {
                             obj.item.hideFlags = HideFlags.DontSaveInBuild;
                             Debug.Log($"Exluded object: {obj.item.name} from: {activePlatform}, {activeStore}");
-                        } 
+                        }
                     }
                 }
             }
