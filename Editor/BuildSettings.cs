@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Threading;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -104,7 +105,7 @@ namespace HexTecGames.Editor.BuildHelper
             buildPlayerOptions.locationPathName = GetFullPath(platformSetting, storeSetting);
             buildPlayerOptions.target = platformSetting.buildTarget;
             buildPlayerOptions.options = options;
-
+            Thread.Sleep(100);
             return BuildPipeline.BuildPlayer(buildPlayerOptions);
         }
 
@@ -116,23 +117,33 @@ namespace HexTecGames.Editor.BuildHelper
             }
             if (targetSetting.isWebGL)
             {
-                List<string> results = GetAllFolderNames("Assets");
-                if (results.Contains(targetSetting.webGLTemplate))
+                PlayerSettings.defaultWebScreenWidth = targetSetting.width;
+                PlayerSettings.defaultScreenHeight = targetSetting.height;
+
+                List<string> results = GetAllFolderPaths("Assets");
+                string[] folderNames;
+                foreach (var result in results)
                 {
-                    PlayerSettings.WebGL.template = "PROJECT:" + targetSetting.webGLTemplate;
-                }
-                else PlayerSettings.WebGL.template = "APPLICATION:" + targetSetting.webGLTemplate;
+                    folderNames = result.Split(new char[] { '/', '\\' });
+                    if (folderNames.Contains(targetSetting.webGLTemplate))
+                    {
+                        PlayerSettings.WebGL.template = "PROJECT:" + targetSetting.webGLTemplate;
+                        return;
+                    }
+                }             
+                PlayerSettings.WebGL.template = "APPLICATION:" + targetSetting.webGLTemplate;
             }
         }
 
-        private List<string> GetAllFolderNames(string startFolder)
+        private List<string> GetAllFolderPaths(string startFolder)
         {
             List<string> folderNames = new List<string>();
+            //Debug.Log(startFolder);
             var results = AssetDatabase.GetSubFolders(startFolder);
             folderNames.AddRange(results);
             foreach (var result in results)
             {
-                folderNames.AddRange(GetAllFolderNames(result));
+                folderNames.AddRange(GetAllFolderPaths(result));
             }
             return folderNames;
         }
