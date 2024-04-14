@@ -13,8 +13,8 @@ namespace HexTecGames.Editor.BuildHelper
 		public string name;
         [HideInInspector] public bool isWebGL;
         [DrawIf(nameof(isWebGL), true)] public string webGLTemplate = "Default";
-        [DrawIf(nameof(isWebGL), true)] public int width = 900;
-        [DrawIf(nameof(isWebGL), true)] public int height = 600;
+        //[DrawIf(nameof(isWebGL), true)] public int width = 900;
+        //[DrawIf(nameof(isWebGL), true)] public int height = 600;
         [DrawIf(nameof(isWebGL), true)] public bool createZip = true;
 
         [Tooltip("Scenes that will only be added to this specific Build")]

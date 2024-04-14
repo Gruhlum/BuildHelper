@@ -117,8 +117,8 @@ namespace HexTecGames.Editor.BuildHelper
             }
             if (targetSetting.isWebGL)
             {
-                PlayerSettings.defaultWebScreenWidth = targetSetting.width;
-                PlayerSettings.defaultScreenHeight = targetSetting.height;
+                //PlayerSettings.defaultWebScreenWidth = targetSetting.width;
+                //PlayerSettings.defaultScreenHeight = targetSetting.height;
 
                 List<string> results = GetAllFolderPaths("Assets");
                 string[] folderNames;
