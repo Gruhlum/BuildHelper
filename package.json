@@ -4,9 +4,6 @@
   "displayName": "BuildHelper",
   "description": "Package for automating the Build process",
   "unity": "2019.1",
-  "dependencies": {
-    "com.hextecgames.basics": "1.0.0"
-  },
   "author": {
     "name": "HexTecGames"
   }
