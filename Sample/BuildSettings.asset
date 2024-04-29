@@ -27,15 +27,9 @@ MonoBehaviour:
       name: default
       createZip: 1
       isWebGL: 1
-      webGLTemplate: Default
+      webGLTemplate: 
       extraScenes: []
       exclusiveObjects: []
       copyFolders: []
       externalScript: 
       runExternalScript: 0
-  - include: 0
-    buildTarget: 0
-    fileEnding: 
-    extraScenes: []
-    exclusiveObjects: []
-    storeSettings: []

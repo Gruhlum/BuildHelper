@@ -9,6 +9,6 @@ namespace HexTecGames.Editor.BuildHelper
 	{
 		public enum Mode { Include, Exclude }
 		public Mode mode;
-		public GameObject item;
+		public Object item;
 	}
 }

@@ -11,10 +11,10 @@ namespace HexTecGames.Editor.BuildHelper
 	{
         [Tooltip("Include this the next time we build")]
         public bool include = true;
-        [Tooltip("Scenes to only be added for this Platform")]
         public BuildTarget buildTarget;       
         [Tooltip("File ending of executable, e.g.: (Windows:.exe, Linux:.x86_64 or empty for OSX")]
         public string fileEnding;
+        [Tooltip("Scenes to only be added for this Platform")]
         public List<SceneOrder> extraScenes;
         [Tooltip("Objects that will only be included/exluded for this Platform")]
         public List<ObjectFilter> exclusiveObjects;

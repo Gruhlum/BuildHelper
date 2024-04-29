@@ -31,5 +31,4 @@ namespace HexTecGames.Editor.BuildHelper
         [Tooltip("Should this script be run after Build is complete")]
         public bool runExternalScript;
     }
-
 }
