@@ -82,7 +82,11 @@ namespace HexTecGames.Editor.BuildHelper
                 Debug.Log("Build succeeded: " + summary.totalSize + " bytes");
                 if (storeSetting.createZip)
                 {
-                    CreateZipFile(Directory.GetParent(summary.outputPath).FullName);
+                    if (platformSetting.buildTarget == BuildTarget.WebGL)
+                    {
+                        CreateZipFile(summary.outputPath);
+                    }
+                    else CreateZipFile(Directory.GetParent(summary.outputPath).FullName);
                 }
             }
             else if (summary.result == BuildResult.Failed)
