@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6baf1666b16da89419af864a0b345db5, type: 3}
+  m_Name: BuildSettings
+  m_EditorClassIdentifier: 
+  version: 0
+  updateType: 1
+  options: 0
+  scenes: []
+  platformSettings:
+  - include: 1
+    buildTarget: 20
+    fileEnding: 
+    extraScenes: []
+    exclusiveObjects: []
+    storeSettings:
+    - include: 1
+      name: default
+      createZip: 1
+      isWebGL: 1
+      webGLTemplate: Default
+      extraScenes: []
+      exclusiveObjects: []
+      copyFolders: []
+      externalScript: 
+      runExternalScript: 0
+  - include: 0
+    buildTarget: 0
+    fileEnding: 
+    extraScenes: []
+    exclusiveObjects: []
+    storeSettings: []

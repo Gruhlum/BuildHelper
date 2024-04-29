@@ -98,11 +98,15 @@ namespace HexTecGames.Editor.BuildHelper
             }
             string path = GenerateFolders(platformSetting, storeSetting);
             fullBuildPaths.Add(path);
-            Debug.Log(path);
-            Debug.Log(Path.Combine(path, GetFileName(platformSetting, storeSetting)));
+            //Debug.Log(path);
+            //Debug.Log(Path.Combine(path, GetFileName(platformSetting, storeSetting)));
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
             buildPlayerOptions.scenes = GetSceneNames(platformSetting, storeSetting).ToArray();
-            buildPlayerOptions.locationPathName = Path.Combine(path, GetFileName(platformSetting, storeSetting));
+            if (platformSetting.buildTarget == BuildTarget.WebGL)
+            {
+                buildPlayerOptions.locationPathName = path;
+            }
+            else buildPlayerOptions.locationPathName = Path.Combine(path, GetFileName(platformSetting, storeSetting));
             buildPlayerOptions.target = platformSetting.buildTarget;
             buildPlayerOptions.options = options;
             Thread.Sleep(100);
@@ -264,22 +268,22 @@ namespace HexTecGames.Editor.BuildHelper
         }
         private string GenerateFolders(PlatformSettings platformSetting, StoreSettings storeSetting)
         {
-            string lastPath = Directory.GetCurrentDirectory();
-            lastPath = Path.Combine(lastPath, "Builds");
+            string lastPath = Directory.GetCurrentDirectory(); //..ProjectName
+            lastPath = Path.Combine(lastPath, "Builds"); //ProjectName/Builds
             FileManager.CreateDirectory(lastPath);
-            lastPath = Path.Combine(lastPath, platformSetting.buildTarget.ToString());
+            lastPath = Path.Combine(lastPath, platformSetting.buildTarget.ToString()); //ProjectName/Builds/Platform
             FileManager.CreateDirectory(lastPath);
 
-            lastPath = GetBuildFolderPath(platformSetting, storeSetting);
+            lastPath = GetBuildFolderPath(platformSetting, storeSetting); //ProjectName/Builds/Platform/Platform_Store_0.0.0
             FileManager.CreateDirectory(lastPath);
 
             return lastPath;
         }
         private string GetBuildFolderPath(PlatformSettings platformSetting, StoreSettings storeSetting)
         {
-            //../Assets/Builds/WindowsStandalone64/WindowsStandalone64_1.0.0_Steam/
+            //../Assets/Builds/WindowsStandalone64/WindowsStandalone64_Steam_1.0.0/
             return Path.Combine(Directory.GetCurrentDirectory(), "Builds", platformSetting.buildTarget.ToString(),
-                $"{platformSetting.buildTarget}_{VersionNumber.GetCurrentVersion()}_{storeSetting.name}");
+                $"{platformSetting.buildTarget}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}");
         }
         private string GetFileName(PlatformSettings platformSetting, StoreSettings storeSetting)
         {

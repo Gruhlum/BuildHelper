@@ -1,6 +1,6 @@
 {
   "name": "com.hextecgames.buildhelper",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "displayName": "BuildHelper",
   "description": "Package for automating the Build process",
   "unity": "2019.1",
@@ -9,5 +9,12 @@
   },
   "dependencies": {
     "com.hextecgames.basics": "1.0.0"
-  }
+  },
+  "samples": [
+    {
+      "displayName": "Sample",
+      "description": "Contains example Setting",
+      "path": "Sample"
+    }
+  ]
 }
