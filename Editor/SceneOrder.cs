@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace HexTecGames
+namespace HexTecGames.Editor.BuildHelper
 {
 	[System.Serializable]
 	public class SceneOrder
