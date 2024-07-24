@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace HexTecGames.Editor.BuildHelper
+namespace HexTecGames.BuildHelper.Editor
 {
     public class VersionNumber
     {

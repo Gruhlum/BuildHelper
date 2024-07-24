@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace HexTecGames.Editor.BuildHelper
+namespace HexTecGames.BuildHelper.Editor
 {
 	[System.Serializable]
 	public class ObjectFilter

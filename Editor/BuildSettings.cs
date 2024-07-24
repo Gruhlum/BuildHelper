@@ -1,4 +1,3 @@
-using HexTecGames.Basics;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,7 +10,7 @@ using UnityEditor.Build.Reporting;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-namespace HexTecGames.Editor.BuildHelper
+namespace HexTecGames.BuildHelper.Editor
 {
 
     [CreateAssetMenu(fileName = "BuildSettings", menuName = "HexTecGames/Editor/BuildSettings")]
@@ -274,12 +273,12 @@ namespace HexTecGames.Editor.BuildHelper
         {
             string lastPath = Directory.GetCurrentDirectory(); //..ProjectName
             lastPath = Path.Combine(lastPath, "Builds"); //ProjectName/Builds
-            FileManager.CreateDirectory(lastPath);
+            CreateDirectory(lastPath);
             lastPath = Path.Combine(lastPath, platformSetting.buildTarget.ToString()); //ProjectName/Builds/Platform
-            FileManager.CreateDirectory(lastPath);
+            CreateDirectory(lastPath);
 
             lastPath = GetBuildFolderPath(platformSetting, storeSetting); //ProjectName/Builds/Platform/Platform_Store_0.0.0
-            FileManager.CreateDirectory(lastPath);
+            CreateDirectory(lastPath);
 
             return lastPath;
         }
@@ -291,7 +290,6 @@ namespace HexTecGames.Editor.BuildHelper
         }
         private string GetFileName(PlatformSettings platformSetting, StoreSettings storeSetting)
         {
-            return $"{PlayerSettings.productName}{platformSetting.fileEnding}";
             string fileName;
             if (platformSetting.buildTarget == BuildTarget.WebGL)
             {
@@ -310,9 +308,13 @@ namespace HexTecGames.Editor.BuildHelper
                 else fileName = $"{PlayerSettings.productName}{platformSetting.fileEnding}";
             }
 
-            //return Path.Combine(GetLocationPath(platformSetting), fileName);
+            return fileName;
         }
-
+        public static void CreateDirectory(string path)
+        {
+            if (!Directory.Exists(path))
+                Directory.CreateDirectory(path);
+        }
         //private string GetLocationPath(PlatformSettings setting)
         //{
         //    if (setting.buildTarget == BuildTarget.WebGL)

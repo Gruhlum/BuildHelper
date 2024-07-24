@@ -1,10 +1,8 @@
-using HexTecGames.Basics;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 
-namespace HexTecGames.Editor.BuildHelper
+namespace HexTecGames.BuildHelper.Editor
 {
     [System.Serializable]
     public class StoreSettings
@@ -13,7 +11,7 @@ namespace HexTecGames.Editor.BuildHelper
         public string name;
         public bool createZip = true;
         [HideInInspector] public bool isWebGL;
-        [DrawIf(nameof(isWebGL), true)] public string webGLTemplate = "Default";
+        public string webGLTemplate = "Default";
         //[DrawIf(nameof(isWebGL), true)] public int width = 900;
         //[DrawIf(nameof(isWebGL), true)] public int height = 600;
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace HexTecGames.Editor.BuildHelper
+namespace HexTecGames.BuildHelper.Editor
 {
 
     [System.Serializable]
