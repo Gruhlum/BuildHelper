@@ -41,6 +41,9 @@ namespace HexTecGames.BuildHelper.Editor
             VersionNumber.IncreaseVersion(updateType);
             updateType = UpdateType.None;
             fullBuildPaths.Clear();
+
+            bool success = false;
+
             foreach (var platformSetting in platformSettings)
             {
                 if (!platformSetting.include)
@@ -48,6 +51,9 @@ namespace HexTecGames.BuildHelper.Editor
                     Debug.Log($"Skipped {platformSetting.buildTarget} since it is not included");
                     continue;
                 }
+
+                platformSetting.ApplySettings();
+
                 foreach (var storeSetting in platformSetting.storeSettings)
                 {
                     if (!storeSetting.include)
@@ -55,14 +61,18 @@ namespace HexTecGames.BuildHelper.Editor
                         Debug.Log($"Skipped {storeSetting.name} since it is not included");
                         continue;
                     }
-                    ApplyStoreSettings(storeSetting, platformSetting.storeSettings);
+                    
                     ApplyObjectFilters(platformSetting, storeSetting);
-                    Build(platformSetting, storeSetting);
+                    bool result = Build(platformSetting, storeSetting);
+                    if (result)
+                    {
+                        success = true;
+                    }
                 }
                 CopyFolders(platformSetting.storeSettings);
                 RunExternalScript(platformSetting.storeSettings);
             }
-            if (fullBuildPaths != null && fullBuildPaths.Count > 0)
+            if (success && fullBuildPaths != null && fullBuildPaths.Count > 0)
             {
                 Process.Start(fullBuildPaths[0]);
             }
@@ -72,7 +82,7 @@ namespace HexTecGames.BuildHelper.Editor
         {
             ZipFile.CreateFromDirectory(path, path + ".zip");
         }
-        private void Build(PlatformSettings platformSetting, StoreSettings storeSetting)
+        private bool Build(PlatformSettings platformSetting, StoreSettings storeSetting)
         {
             BuildReport report = BuildPlatform(platformSetting, storeSetting);
             BuildSummary summary = report.summary;
@@ -81,79 +91,36 @@ namespace HexTecGames.BuildHelper.Editor
                 Debug.Log("Build succeeded: " + summary.totalSize + " bytes");
                 if (storeSetting.createZip)
                 {
-                    if (platformSetting.buildTarget == BuildTarget.WebGL)
-                    {
-                        CreateZipFile(summary.outputPath);
-                    }
-                    else CreateZipFile(Directory.GetParent(summary.outputPath).FullName);
+                    CreateZipFile(platformSetting.buildTarget.GetZipFilePath(summary.outputPath));
                 }
+                return true;
             }
             else if (summary.result == BuildResult.Failed)
             {
                 Debug.Log("Build failed");
+                return false;
             }
+            else return false;
         }
         private BuildReport BuildPlatform(PlatformSettings platformSetting, StoreSettings storeSetting)
         {
-            if (platformSetting.buildTarget == BuildTarget.NoTarget)
+            if (platformSetting.buildTarget == null)
             {
                 Debug.LogError("No build target selected");
             }
+
             string path = GenerateFolders(platformSetting, storeSetting);
             fullBuildPaths.Add(path);
-            //Debug.Log(path);
-            //Debug.Log(Path.Combine(path, GetFileName(platformSetting, storeSetting)));
             BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
             buildPlayerOptions.scenes = GetSceneNames(platformSetting, storeSetting).ToArray();
-            if (platformSetting.buildTarget == BuildTarget.WebGL)
-            {
-                buildPlayerOptions.locationPathName = path;
-            }
-            else buildPlayerOptions.locationPathName = Path.Combine(path, GetFileName(platformSetting, storeSetting));
-            buildPlayerOptions.target = platformSetting.buildTarget;
+            buildPlayerOptions.locationPathName = platformSetting.buildTarget.GetLocationPath(path, GetFileName(platformSetting, storeSetting));
+            buildPlayerOptions.target = platformSetting.buildTarget.BuildTarget;
             buildPlayerOptions.options = options;
+
             Thread.Sleep(100);
             return BuildPipeline.BuildPlayer(buildPlayerOptions);
         }
-        private void ApplyStoreSettings(StoreSettings targetSetting, List<StoreSettings> storeSettings)
-        {
-            if (storeSettings == null)
-            {
-                return;
-            }
-            if (targetSetting.isWebGL)
-            {
-                //PlayerSettings.defaultWebScreenWidth = targetSetting.width;
-                //PlayerSettings.defaultScreenHeight = targetSetting.height;
-
-                List<string> results = GetAllFolderPaths("Assets");
-                string[] folderNames;
-                foreach (var result in results)
-                {
-                    folderNames = result.Split(new char[] { '/', '\\' });
-                    if (folderNames.Contains(targetSetting.webGLTemplate))
-                    {
-                        PlayerSettings.WebGL.template = "PROJECT:" + targetSetting.webGLTemplate;
-                        return;
-                    }
-                }
-                PlayerSettings.WebGL.template = "APPLICATION:" + targetSetting.webGLTemplate;
-            }
-        }
-
-        private List<string> GetAllFolderPaths(string startFolder)
-        {
-            List<string> folderNames = new List<string>();
-            //Debug.Log(startFolder);
-            var results = AssetDatabase.GetSubFolders(startFolder);
-            folderNames.AddRange(results);
-            foreach (var result in results)
-            {
-                folderNames.AddRange(GetAllFolderPaths(result));
-            }
-            return folderNames;
-        }
-
+      
         private void ApplyObjectFilters(PlatformSettings activePlatform, StoreSettings activeStore)
         {
             foreach (var platform in platformSettings)
@@ -234,7 +201,7 @@ namespace HexTecGames.BuildHelper.Editor
                 {
                     continue;
                 }
-                PlatformSettings platformSetting = platformSettings.Find(x => x.buildTarget == copyFolder.buildTarget);
+                PlatformSettings platformSetting = platformSettings.Find(x => x.buildTarget.BuildTarget == copyFolder.buildTarget);
                 if (platformSetting == null)
                 {
                     Debug.Log("no build found: " + platformSetting.buildTarget);
@@ -291,7 +258,7 @@ namespace HexTecGames.BuildHelper.Editor
         private string GetFileName(PlatformSettings platformSetting, StoreSettings storeSetting)
         {
             string fileName;
-            if (platformSetting.buildTarget == BuildTarget.WebGL)
+            if (platformSetting.buildTarget is WebGLTarget)
             {
                 if (version == VersionType.Demo)
                 {
@@ -315,17 +282,7 @@ namespace HexTecGames.BuildHelper.Editor
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
         }
-        //private string GetLocationPath(PlatformSettings setting)
-        //{
-        //    if (setting.buildTarget == BuildTarget.WebGL)
-        //    {
-        //        return Path.Combine("Builds", version == VersionType.Demo ? "DEMO" : "", setting.buildTarget.ToString());
-        //    }
-        //    else
-        //    {
-        //        return Path.Combine("Builds", version == VersionType.Demo ? "DEMO" : "", setting.buildTarget.ToString());
-        //    }
-        //}
+
         private List<string> GetSceneNames(PlatformSettings platformSetting, StoreSettings storeSetting)
         {
             List<SceneOrder> sceneOrders = new List<SceneOrder>();
@@ -345,7 +302,8 @@ namespace HexTecGames.BuildHelper.Editor
             sceneOrders = sceneOrders.OrderBy(x => x.order).ToList();
             foreach (var sceneOrder in sceneOrders)
             {
-                sceneNames.Add("Assets/Scenes/" + sceneOrder.scene.name + ".unity");
+                string path = AssetDatabase.GetAssetPath(sceneOrder.scene);
+                sceneNames.Add(path);
             }
             return sceneNames;
         }

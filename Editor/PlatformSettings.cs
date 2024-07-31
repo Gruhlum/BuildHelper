@@ -5,12 +5,12 @@ using UnityEngine;
 
 namespace HexTecGames.BuildHelper.Editor
 {
-	[System.Serializable]
-	public class PlatformSettings
-	{
+    [System.Serializable]
+    public class PlatformSettings
+    {
         [Tooltip("Include this the next time we build")]
         public bool include = true;
-        public BuildTarget buildTarget;       
+        [SerializeReference, SubclassSelector] public PlatformTarget buildTarget;
         [Tooltip("File ending of executable, e.g.: (Windows:.exe, Linux:.x86_64 or empty for OSX")]
         public string fileEnding;
         [Tooltip("Scenes to only be added for this Platform")]
@@ -20,40 +20,26 @@ namespace HexTecGames.BuildHelper.Editor
         [Tooltip("Can be used to deactive specific gameObjects or to copy the builds into another folder")]
         public List<StoreSettings> storeSettings;
 
-        private BuildTarget lastBuildTarget;
-
         public void OnValidate()
         {
             CheckFileEnding();
-            foreach (var storeSetting in storeSettings)
-            {
-                if (buildTarget == BuildTarget.WebGL)
-                {
-                    storeSetting.isWebGL = true;
-                }
-                else storeSetting.isWebGL = false;
-            }
         }
 
         private void CheckFileEnding()
         {
-            if (lastBuildTarget != buildTarget)
+            if (buildTarget == null)
             {
-                lastBuildTarget = buildTarget;
-                if (buildTarget == BuildTarget.StandaloneWindows64 || buildTarget == BuildTarget.StandaloneWindows)
-                {
-                    fileEnding = ".exe";
-                }
-                else if (buildTarget == BuildTarget.StandaloneLinux64)
-                {
-                    fileEnding = ".x86_64";
-                }
-                else if (buildTarget == BuildTarget.StandaloneOSX)
-                {
-                    fileEnding = ".app";
-                }
-                else fileEnding = null;
+                fileEnding = string.Empty;
+            }
+            else fileEnding = buildTarget.FileEnding;
+        }
+
+        public void ApplySettings()
+        {
+            if (buildTarget != null)
+            {
+                buildTarget.ApplySettings();
             }
         }
-	}
+    }
 }

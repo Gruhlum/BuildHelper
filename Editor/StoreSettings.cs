@@ -9,11 +9,7 @@ namespace HexTecGames.BuildHelper.Editor
     {
         public bool include = true;
         public string name;
-        public bool createZip = true;
-        [HideInInspector] public bool isWebGL;
-        public string webGLTemplate = "Default";
-        //[DrawIf(nameof(isWebGL), true)] public int width = 900;
-        //[DrawIf(nameof(isWebGL), true)] public int height = 600;
+        public bool createZip = true;      
 
         [Tooltip("Scenes that will only be added to this specific Build")]
         public List<SceneOrder> extraScenes;
