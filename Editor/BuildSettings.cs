@@ -253,7 +253,7 @@ namespace HexTecGames.BuildHelper.Editor
         {
             //../Assets/Builds/WindowsStandalone64/WindowsStandalone64_Steam_1.0.0/
             return Path.Combine(Directory.GetCurrentDirectory(), "Builds", platformSetting.buildTarget.ToString(),
-                $"{platformSetting.buildTarget}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}");
+                $"{platformSetting.buildTarget.BuildTarget}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}");
         }
         private string GetFileName(PlatformSettings platformSetting, StoreSettings storeSetting)
         {
