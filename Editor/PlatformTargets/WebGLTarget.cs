@@ -10,6 +10,15 @@ namespace HexTecGames.BuildHelper.Editor
     public class WebGLTarget : PlatformTarget
     {
         public string webGLTemplate = "Default";
+
+        public override bool CreateZip
+        {
+            get
+            {
+                return createZip;
+            }
+        }
+        public bool createZip;
         public int width = 900;
         public int height = 600;
 
@@ -18,6 +27,14 @@ namespace HexTecGames.BuildHelper.Editor
             get
             {
                 return BuildTarget.WebGL;
+            }
+        }
+
+        public override string Name
+        {
+            get
+            {
+                return "WebGL";
             }
         }
 
@@ -56,6 +73,19 @@ namespace HexTecGames.BuildHelper.Editor
                 folderNames.AddRange(GetAllFolderPaths(result));
             }
             return folderNames;
+        }
+
+        public override string GetFileName(PlatformSettings platformSetting, StoreSettings storeSetting, VersionType version)
+        {
+            string fileName;
+
+            if (version == VersionType.Demo)
+            {
+                fileName = $"{PlayerSettings.productName}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}_demo{platformSetting.fileEnding}";
+            }
+            else fileName = $"{PlayerSettings.productName}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}{platformSetting.fileEnding}";
+
+            return fileName;
         }
     }
 }

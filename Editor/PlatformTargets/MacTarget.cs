@@ -23,5 +23,13 @@ namespace HexTecGames.BuildHelper.Editor
                 return ".app";
             }
         }
+
+        public override string Name
+        {
+            get
+            {
+                return "OSX";
+            }
+        }
     }
 }

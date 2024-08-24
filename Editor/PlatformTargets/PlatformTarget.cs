@@ -17,6 +17,17 @@ namespace HexTecGames.BuildHelper.Editor
             }
         }
 
+        public virtual bool CreateZip
+        {
+            get
+            {
+                return false;
+            }
+        }
+        public abstract string Name
+        {
+            get;
+        }
         public abstract BuildTarget BuildTarget
         {
             get;
@@ -28,12 +39,24 @@ namespace HexTecGames.BuildHelper.Editor
         }
 
         public virtual string GetLocationPath(string path, string fileName)
-        {          
-           return Path.Combine(path, fileName);
+        {
+            return Path.Combine(path, fileName);
         }
         public virtual void ApplySettings()
         {
 
+        }
+        public virtual string GetFileName(PlatformSettings platformSetting, StoreSettings storeSetting, VersionType version)
+        {
+            string fileName;
+
+            if (version == VersionType.Demo)
+            {
+                fileName = $"{PlayerSettings.productName}_demo{platformSetting.fileEnding}";
+            }
+            else fileName = $"{PlayerSettings.productName}{platformSetting.fileEnding}";
+
+            return fileName;
         }
     }
 }

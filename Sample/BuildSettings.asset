@@ -13,23 +13,49 @@ MonoBehaviour:
   m_Name: BuildSettings
   m_EditorClassIdentifier: 
   version: 0
-  updateType: 1
+  updateType: 0
   options: 0
   scenes: []
   platformSettings:
   - include: 1
-    buildTarget: 20
+    buildTarget:
+      rid: 4175934729535881217
     fileEnding: 
     extraScenes: []
     exclusiveObjects: []
     storeSettings:
     - include: 1
-      name: default
+      name: Default
       createZip: 1
-      isWebGL: 1
-      webGLTemplate: 
       extraScenes: []
       exclusiveObjects: []
       copyFolders: []
       externalScript: 
       runExternalScript: 0
+  - include: 1
+    buildTarget:
+      rid: 4175934729535881218
+    fileEnding: .exe
+    extraScenes: []
+    exclusiveObjects: []
+    storeSettings:
+    - include: 1
+      name: Default
+      createZip: 1
+      extraScenes: []
+      exclusiveObjects: []
+      copyFolders: []
+      externalScript: 
+      runExternalScript: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 4175934729535881217
+      type: {class: WebGLTarget, ns: HexTecGames.BuildHelper.Editor, asm: HexTecGames.BuildHelper.Editor}
+      data:
+        webGLTemplate: Default
+        width: 900
+        height: 600
+    - rid: 4175934729535881218
+      type: {class: WindowsTarget, ns: HexTecGames.BuildHelper.Editor, asm: HexTecGames.BuildHelper.Editor}
+      data: 

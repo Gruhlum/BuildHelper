@@ -15,5 +15,13 @@ namespace HexTecGames.BuildHelper.Editor
                 return BuildTarget.Android;
             }
         }
+
+        public override string Name
+        {
+            get
+            {
+                return "Android";
+            }
+        }
     }
 }

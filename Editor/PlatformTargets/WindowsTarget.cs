@@ -23,5 +23,13 @@ namespace HexTecGames.BuildHelper.Editor
                 return ".exe";
             }
         }
+
+        public override string Name
+        {
+            get
+            {
+                return "Windows";
+            }
+        }
     }
 }

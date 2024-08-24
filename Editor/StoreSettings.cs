@@ -8,8 +8,7 @@ namespace HexTecGames.BuildHelper.Editor
     public class StoreSettings
     {
         public bool include = true;
-        public string name;
-        public bool createZip = true;      
+        public string name;     
 
         [Tooltip("Scenes that will only be added to this specific Build")]
         public List<SceneOrder> extraScenes;

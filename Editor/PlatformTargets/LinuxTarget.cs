@@ -23,5 +23,13 @@ namespace HexTecGames.BuildHelper.Editor
                 return BuildTarget.StandaloneLinux64;
             }
         }
+
+        public override string Name
+        {
+            get
+            {
+                return "Linux";
+            }
+        }
     }
 }

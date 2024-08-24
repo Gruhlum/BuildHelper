@@ -18,12 +18,10 @@ namespace HexTecGames.BuildHelper.Editor
             this.Medium = medium;
             this.Minor = minor;
         }
-
         public static string GetCurrentVersion()
         {
             return PlayerSettings.bundleVersion;
         }
-
         private static VersionNumber CreateVersionNumber()
         {
             string result = PlayerSettings.bundleVersion;
@@ -40,6 +38,14 @@ namespace HexTecGames.BuildHelper.Editor
                 int.TryParse(results[2], out minor);
             }
             return new VersionNumber(major, medium, minor);
+        }
+        public static void SetVersionNumber(string versionNumber)
+        {
+            PlayerSettings.bundleVersion = versionNumber;
+        }
+        public static void SetVersionNumber(VersionNumber versionNumber)
+        {
+            PlayerSettings.bundleVersion = versionNumber.ToString();
         }
         public static void IncreaseVersion(UpdateType updateType)
         {
