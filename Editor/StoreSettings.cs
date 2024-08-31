@@ -23,5 +23,10 @@ namespace HexTecGames.BuildHelper.Editor
         public string externalScript;       
         [Tooltip("Should this script be run after Build is complete")]
         public bool runExternalScript;
+
+        public override string ToString()
+        {
+            return name;
+        }
     }
 }

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.Build.Reporting;
 using UnityEngine;
 
 namespace HexTecGames.BuildHelper.Editor
@@ -40,6 +41,22 @@ namespace HexTecGames.BuildHelper.Editor
             {
                 buildTarget.ApplySettings();
             }
+        }
+
+        public void OnBuildFinished(BuildSummary summary)
+        {
+            if (buildTarget != null)
+            {
+                buildTarget.OnBuildFinished(summary);
+            }
+        }
+        public override string ToString()
+        {
+            if (buildTarget == null)
+            {
+                return "No Build Target";
+            }
+            else return buildTarget.Name;
         }
     }
 }

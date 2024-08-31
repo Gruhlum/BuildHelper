@@ -1,7 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.Build.Reporting;
 using UnityEngine;
 
 namespace HexTecGames.BuildHelper.Editor
@@ -11,13 +14,6 @@ namespace HexTecGames.BuildHelper.Editor
     {
         public string webGLTemplate = "Default";
 
-        public override bool CreateZip
-        {
-            get
-            {
-                return createZip;
-            }
-        }
         public bool createZip;
         public int width = 900;
         public int height = 600;
@@ -38,9 +34,11 @@ namespace HexTecGames.BuildHelper.Editor
             }
         }
 
-        public override string GetZipFilePath(string outputPath)
+        private string GetZipFilePath(string outputPath)
         {
-            return outputPath;
+            DirectoryInfo directoryInfo = new DirectoryInfo(outputPath);
+            string newFolderName = directoryInfo.Name.Replace("WebGL", Application.productName);
+            return Path.Combine(directoryInfo.Parent.FullName, newFolderName);
         }
 
         public override string GetLocationPath(string path, string fileName)
@@ -86,6 +84,18 @@ namespace HexTecGames.BuildHelper.Editor
             else fileName = $"{PlayerSettings.productName}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}{platformSetting.fileEnding}";
 
             return fileName;
+        }
+
+        public override void OnBuildFinished(BuildSummary buildSummary)
+        {
+            if (buildSummary.result == BuildResult.Succeeded)
+            {
+                CreateZipFile(buildSummary.outputPath);
+            }
+        }
+        private void CreateZipFile(string path)
+        {
+            ZipFile.CreateFromDirectory(path, GetZipFilePath(path) + ".zip");
         }
     }
 }

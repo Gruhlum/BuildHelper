@@ -8,8 +8,6 @@ namespace HexTecGames.BuildHelper.Editor
 {
     public class BuildWindow : EditorWindow
     {
-        [SerializeField] private BuildSettings settings = default;
-
         [MenuItem("Tools/Build")]
         public static void ShowWindow()
         {
@@ -17,7 +15,11 @@ namespace HexTecGames.BuildHelper.Editor
         }
         private void OnGUI()
         {
-            UnityEditor.Editor m_MyScriptableObjectEditor = UnityEditor.Editor.CreateEditor(settings);
+            if (BuildSettings.instance == null)
+            {
+                return;
+            }
+            UnityEditor.Editor m_MyScriptableObjectEditor = UnityEditor.Editor.CreateEditor(BuildSettings.instance);
             m_MyScriptableObjectEditor.OnInspectorGUI();
         }
     }

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
+using UnityEditor.Build.Reporting;
 using UnityEngine;
 
 namespace HexTecGames.BuildHelper.Editor
@@ -17,13 +18,6 @@ namespace HexTecGames.BuildHelper.Editor
             }
         }
 
-        public virtual bool CreateZip
-        {
-            get
-            {
-                return false;
-            }
-        }
         public abstract string Name
         {
             get;
@@ -31,11 +25,6 @@ namespace HexTecGames.BuildHelper.Editor
         public abstract BuildTarget BuildTarget
         {
             get;
-        }
-
-        public virtual string GetZipFilePath(string outputPath)
-        {
-            return Directory.GetParent(outputPath).FullName;
         }
 
         public virtual string GetLocationPath(string path, string fileName)
@@ -57,6 +46,15 @@ namespace HexTecGames.BuildHelper.Editor
             else fileName = $"{PlayerSettings.productName}{platformSetting.fileEnding}";
 
             return fileName;
+        }
+
+        public virtual void OnBuildFinished(BuildSummary buildSummary)
+        {
+        }
+
+        public override string ToString()
+        {
+            return Name;
         }
     }
 }

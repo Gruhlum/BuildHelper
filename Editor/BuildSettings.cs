@@ -27,12 +27,18 @@ namespace HexTecGames.BuildHelper.Editor
 
         private List<string> fullBuildPaths = new List<string>();
 
+        public static BuildSettings instance;
+
         private void OnValidate()
         {
             foreach (var platformSetting in platformSettings)
             {
                 platformSetting.OnValidate();
             }
+        }
+        private void Awake()
+        {
+            instance = this;
         }
 
         [ContextMenu("Build All")]
@@ -62,7 +68,7 @@ namespace HexTecGames.BuildHelper.Editor
                         Debug.Log($"Skipped {storeSetting.name} since it is not included");
                         continue;
                     }
-                    
+
                     ApplyObjectFilters(platformSetting, storeSetting);
                     bool result = Build(platformSetting, storeSetting);
                     if (result)
@@ -70,37 +76,31 @@ namespace HexTecGames.BuildHelper.Editor
                         success = true;
                     }
                 }
-                CopyFolders(platformSetting.storeSettings);
-                RunExternalScript(platformSetting.storeSettings);
-            }
-            if (success && fullBuildPaths != null && fullBuildPaths.Count > 0)
-            {
-                Process.Start(fullBuildPaths[0]);
-            }
-            else VersionNumber.SetVersionNumber(oldVersionNumber);
+                if (success)
+                {
+                    CopyFolders(platformSetting.storeSettings);
+                    RunExternalScript(platformSetting.storeSettings);
+
+                    if (fullBuildPaths != null && fullBuildPaths.Count > 0)
+                    {
+                        Process.Start(fullBuildPaths[0]);
+                    }
+                }
+                else VersionNumber.SetVersionNumber(oldVersionNumber);
+
+                ClearObjectFilters();
+            }            
         }
 
-        private void CreateZipFile(string path)
-        {
-            ZipFile.CreateFromDirectory(path, path + ".zip");
-        }
         private bool Build(PlatformSettings platformSetting, StoreSettings storeSetting)
         {
             BuildReport report = BuildPlatform(platformSetting, storeSetting);
             BuildSummary summary = report.summary;
+            platformSetting.OnBuildFinished(summary);
+
             if (summary.result == BuildResult.Succeeded)
             {
-                Debug.Log("Build succeeded: " + summary.totalSize + " bytes");
-                if (platformSetting.buildTarget.CreateZip)
-                {
-                    CreateZipFile(platformSetting.buildTarget.GetZipFilePath(summary.outputPath));
-                }
                 return true;
-            }
-            else if (summary.result == BuildResult.Failed)
-            {
-                Debug.Log("Build failed");
-                return false;
             }
             else return false;
         }
@@ -123,7 +123,24 @@ namespace HexTecGames.BuildHelper.Editor
             Thread.Sleep(100);
             return BuildPipeline.BuildPlayer(buildPlayerOptions);
         }
-      
+
+        private void ClearObjectFilters()
+        {
+            foreach (var platform in platformSettings)
+            {
+                foreach (var obj in platform.exclusiveObjects)
+                {
+                    obj.item.hideFlags = HideFlags.None;
+                }
+                foreach (var store in platform.storeSettings)
+                {
+                    foreach (var obj in store.exclusiveObjects)
+                    {
+                        obj.item.hideFlags = HideFlags.None;
+                    }
+                }
+            }
+        }
         private void ApplyObjectFilters(PlatformSettings activePlatform, StoreSettings activeStore)
         {
             foreach (var platform in platformSettings)
