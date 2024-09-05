@@ -11,24 +11,7 @@ namespace HexTecGames.BuildHelper.Editor
         public string name;
         public bool include = true;
 
-        public bool IsWebGLStore
-        {
-            get
-            {
-                return isWebGLStore;
-            }
-            set
-            {
-                isWebGLStore = value;
-                if (isWebGLStore == false)
-                {
-                    templateOverride = string.Empty;
-                }
-            }
-        }
-        private bool isWebGLStore;
-
-        [DrawIf(nameof(isWebGLStore), true)] public string templateOverride;
+        [SubclassSelector, SerializeReference] public List<SettingsOverride> settingsOverrides = new List<SettingsOverride>();
 
         [Tooltip("Scenes that will only be added to this specific Build")]
         public List<SceneOrder> extraScenes;
@@ -44,10 +27,18 @@ namespace HexTecGames.BuildHelper.Editor
         [Tooltip("Should this script be run after Build is complete")]
         public bool runExternalScript;
 
-       
 
-
-
+        public bool HasSettingsOverride<T>(out T t) where T : SettingsOverride
+        {
+            if (settingsOverrides == null || settingsOverrides.Count == 0)
+            {
+                t = null;
+                return false;
+            }
+            T settingsOverride = settingsOverrides.Find(x => x is T) as T;
+            t = settingsOverride;
+            return true;
+        }
         public override string ToString()
         {
             return name;

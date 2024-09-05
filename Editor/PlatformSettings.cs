@@ -9,6 +9,7 @@ namespace HexTecGames.BuildHelper.Editor
     [System.Serializable]
     public class PlatformSettings
     {
+        [HideInInspector] public string name;
         [Tooltip("Include this the next time we build")]
         public bool include = true;
         [SerializeReference, SubclassSelector] public PlatformTarget buildTarget;
@@ -24,6 +25,11 @@ namespace HexTecGames.BuildHelper.Editor
         public void OnValidate()
         {
             CheckFileEnding();
+            if (buildTarget == null)
+            {
+                name = "No Build Target";
+            }
+            else name = buildTarget.ToString();
         }
 
         private void CheckFileEnding()

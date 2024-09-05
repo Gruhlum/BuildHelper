@@ -49,7 +49,14 @@ namespace HexTecGames.BuildHelper.Editor
         {
             List<string> results = GetAllFolderPaths("Assets");
             string[] folderNames;
-            string targetTemplate = store.templateOverride == string.Empty ? webGLTemplate : store.templateOverride;
+            string targetTemplate;
+
+            if (store.HasSettingsOverride(out TemplateOverride templateOverride))
+            {
+                targetTemplate = templateOverride.templateOverride;
+            }
+            else targetTemplate = webGLTemplate;
+
             foreach (var result in results)
             {
                 folderNames = result.Split(new char[] { '/', '\\' });
