@@ -28,6 +28,7 @@ namespace HexTecGames.BuildHelper.Editor
         private List<string> fullBuildPaths = new List<string>();
 
         public static BuildSettings instance;
+        private const string BUILD_FOLDER_NAME = "Builds";
 
         private void OnValidate()
         {
@@ -58,9 +59,6 @@ namespace HexTecGames.BuildHelper.Editor
                     Debug.Log($"Skipped {platformSetting.buildTarget.Name} since it is not included");
                     continue;
                 }
-
-                platformSetting.ApplySettings();
-
                 foreach (var storeSetting in platformSetting.storeSettings)
                 {
                     if (!storeSetting.include)
@@ -68,6 +66,8 @@ namespace HexTecGames.BuildHelper.Editor
                         Debug.Log($"Skipped {storeSetting.name} since it is not included");
                         continue;
                     }
+
+                    platformSetting.ApplySettings(storeSetting);
 
                     ApplyObjectFilters(platformSetting, storeSetting);
                     bool result = Build(platformSetting, storeSetting);
@@ -123,7 +123,11 @@ namespace HexTecGames.BuildHelper.Editor
             Thread.Sleep(100);
             return BuildPipeline.BuildPlayer(buildPlayerOptions);
         }
-
+        public void OpenBuildFolder()
+        {
+            TryCreateDirectory(GetBuildFolderPath());
+            Process.Start(GetBuildFolderPath());
+        }
         private void ClearObjectFilters()
         {
             foreach (var platform in platformSettings)
@@ -260,23 +264,27 @@ namespace HexTecGames.BuildHelper.Editor
         {
             string lastPath = Directory.GetCurrentDirectory(); //..ProjectName
             lastPath = Path.Combine(lastPath, "Builds"); //ProjectName/Builds
-            CreateDirectory(lastPath);
+            TryCreateDirectory(lastPath);
             lastPath = Path.Combine(lastPath, platformSetting.buildTarget.Name); //ProjectName/Builds/Platform
-            CreateDirectory(lastPath);
+            TryCreateDirectory(lastPath);
 
             lastPath = GetBuildFolderPath(platformSetting, storeSetting); //ProjectName/Builds/Platform/Platform_Store_0.0.0
-            CreateDirectory(lastPath);
+            TryCreateDirectory(lastPath);
 
             return lastPath;
+        }
+        public string GetBuildFolderPath()
+        {
+            return Path.Combine(Directory.GetCurrentDirectory(), BUILD_FOLDER_NAME);
         }
         private string GetBuildFolderPath(PlatformSettings platformSetting, StoreSettings storeSetting)
         {
             //../Assets/Builds/WindowsStandalone64/Windows_Steam_1.0.0/
-            return Path.Combine(Directory.GetCurrentDirectory(), "Builds", platformSetting.buildTarget.Name,
+            return Path.Combine(GetBuildFolderPath(), platformSetting.buildTarget.Name,
                 $"{platformSetting.buildTarget.Name}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}");
         }
 
-        public static void CreateDirectory(string path)
+        public static void TryCreateDirectory(string path)
         {
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);

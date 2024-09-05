@@ -45,20 +45,21 @@ namespace HexTecGames.BuildHelper.Editor
         {
             return path;
         }
-        public override void ApplySettings()
+        public override void ApplySettings(StoreSettings store)
         {
             List<string> results = GetAllFolderPaths("Assets");
             string[] folderNames;
+            string targetTemplate = store.templateOverride == string.Empty ? webGLTemplate : store.templateOverride;
             foreach (var result in results)
             {
                 folderNames = result.Split(new char[] { '/', '\\' });
-                if (folderNames.Contains(webGLTemplate))
+                if (folderNames.Contains(targetTemplate))
                 {
-                    PlayerSettings.WebGL.template = "PROJECT:" + webGLTemplate;
+                    PlayerSettings.WebGL.template = "PROJECT:" + targetTemplate;
                     return;
                 }
             }
-            PlayerSettings.WebGL.template = "APPLICATION:" + webGLTemplate;
+            PlayerSettings.WebGL.template = "APPLICATION:" + targetTemplate;
         }
 
         private List<string> GetAllFolderPaths(string startFolder)

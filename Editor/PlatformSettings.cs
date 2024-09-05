@@ -35,11 +35,11 @@ namespace HexTecGames.BuildHelper.Editor
             else fileEnding = buildTarget.FileEnding;
         }
 
-        public void ApplySettings()
+        public void ApplySettings(StoreSettings store)
         {
             if (buildTarget != null)
             {
-                buildTarget.ApplySettings();
+                buildTarget.ApplySettings(store);
             }
         }
 

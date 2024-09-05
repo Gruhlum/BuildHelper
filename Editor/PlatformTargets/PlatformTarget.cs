@@ -31,7 +31,7 @@ namespace HexTecGames.BuildHelper.Editor
         {
             return Path.Combine(path, fileName);
         }
-        public virtual void ApplySettings()
+        public virtual void ApplySettings(StoreSettings store)
         {
 
         }

@@ -10,13 +10,16 @@ namespace HexTecGames.BuildHelper.Editor
     {
         public override void OnInspectorGUI()
         {
-            BuildSettings myTarget = (BuildSettings)target;
+            BuildSettings buildSettings = (BuildSettings)target;
 
             GUILayout.Space(10);
-
+            if (GUILayout.Button("Open Build Folder", GUILayout.ExpandWidth(true), GUILayout.Height(24)))
+            {
+                buildSettings.OpenBuildFolder();
+            }
             if (GUILayout.Button("Start Build", GUILayout.ExpandWidth(true), GUILayout.Height(30)))
             {
-                myTarget.BuildAll();
+                buildSettings.BuildAll();
             }
 
             GUILayout.Space(10);
