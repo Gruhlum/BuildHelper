@@ -89,7 +89,7 @@ namespace HexTecGames.BuildHelper.Editor
                 else VersionNumber.SetVersionNumber(oldVersionNumber);
 
                 ClearObjectFilters();
-            }            
+            }
         }
 
         private bool Build(PlatformSettings platformSetting, StoreSettings storeSetting)
@@ -283,7 +283,41 @@ namespace HexTecGames.BuildHelper.Editor
             return Path.Combine(GetBuildFolderPath(), platformSetting.buildTarget.Name,
                 $"{platformSetting.buildTarget.Name}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}");
         }
-
+        public string GetVersionString()
+        {
+            return VersionNumber.GetVersionNumber(updateType);
+        }
+        public int GetTotalBuilds()
+        {
+            int count = 0;
+            foreach (var platform in platformSettings)
+            {
+                foreach (var store in platform.storeSettings)
+                {
+                    count++;
+                }
+            }
+            return count;
+        }
+        public int GetTotalActiveBuilds()
+        {
+            int count = 0;
+            foreach (var platform in platformSettings)
+            {
+                if (!platform.include)
+                {
+                    continue;
+                }
+                foreach (var store in platform.storeSettings)
+                {
+                    if (store.include)
+                    {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
         public static void TryCreateDirectory(string path)
         {
             if (!Directory.Exists(path))

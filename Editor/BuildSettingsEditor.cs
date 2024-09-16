@@ -22,7 +22,10 @@ namespace HexTecGames.BuildHelper.Editor
                 buildSettings.BuildAll();
             }
 
-            GUILayout.Space(10);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Version: " + buildSettings.GetVersionString());
+            GUILayout.Label($"Builds Active: {buildSettings.GetTotalActiveBuilds()}/{buildSettings.GetTotalBuilds()}");
+            GUILayout.EndHorizontal();
 
             base.OnInspectorGUI();
         }

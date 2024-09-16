@@ -1,3 +1,4 @@
+using HexTecGames.Basics;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -103,7 +104,19 @@ namespace HexTecGames.BuildHelper.Editor
         }
         private void CreateZipFile(string path)
         {
-            ZipFile.CreateFromDirectory(path, GetZipFilePath(path) + ".zip");
+            string finalPath = GetZipFilePath(path) + ".zip";
+            if (File.Exists(finalPath))
+            {
+                CreateOldZipPath(finalPath);
+            }
+            ZipFile.CreateFromDirectory(path, finalPath);
+        }
+        private void CreateOldZipPath(string finalPath)
+        {
+            string oldName = Path.GetFileNameWithoutExtension(finalPath);
+            string newName = $"{oldName}_old";
+            string newPath = FileManager.GenerateUniqueFileName(finalPath.Replace(oldName, newName));
+            File.Move(finalPath, newPath);
         }
     }
 }

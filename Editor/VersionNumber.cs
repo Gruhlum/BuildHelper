@@ -47,6 +47,12 @@ namespace HexTecGames.BuildHelper.Editor
         {
             PlayerSettings.bundleVersion = versionNumber.ToString();
         }
+        public static string GetVersionNumber(UpdateType updateType)
+        {
+            VersionNumber number = CreateVersionNumber();
+            number.ApplyIncrease(updateType);
+            return number.ToString();
+        }
         public static void IncreaseVersion(UpdateType updateType)
         {
             VersionNumber number = CreateVersionNumber();
