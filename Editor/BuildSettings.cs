@@ -16,6 +16,7 @@ namespace HexTecGames.BuildHelper.Editor
     [CreateAssetMenu(fileName = "BuildSettings", menuName = "HexTecGames/Editor/BuildSettings")]
     public class BuildSettings : ScriptableObject
     {
+        public string gameName;
         public VersionType version;
         public UpdateType updateType;
         public BuildOptions options;
@@ -32,6 +33,10 @@ namespace HexTecGames.BuildHelper.Editor
 
         private void OnValidate()
         {
+            if (string.IsNullOrEmpty(gameName))
+            {
+                gameName = Application.productName;
+            }
             foreach (var platformSetting in platformSettings)
             {
                 platformSetting.OnValidate();
@@ -46,6 +51,7 @@ namespace HexTecGames.BuildHelper.Editor
         public void BuildAll()
         {
             string oldVersionNumber = VersionNumber.GetCurrentVersion();
+            PlayerSettings.productName = gameName;
             VersionNumber.IncreaseVersion(updateType);
             updateType = UpdateType.None;
             fullBuildPaths.Clear();
@@ -88,6 +94,13 @@ namespace HexTecGames.BuildHelper.Editor
                 }
                 else VersionNumber.SetVersionNumber(oldVersionNumber);
 
+                if (success)
+                {
+                    if (fullBuildPaths != null && fullBuildPaths.Count > 0)
+                    {
+                        Process.Start(fullBuildPaths[0]);
+                    }
+                }
                 ClearObjectFilters();
             }
         }
@@ -281,7 +294,7 @@ namespace HexTecGames.BuildHelper.Editor
         {
             //../Assets/Builds/WindowsStandalone64/Windows_Steam_1.0.0/
             return Path.Combine(GetBuildFolderPath(), platformSetting.buildTarget.Name,
-                $"{platformSetting.buildTarget.Name}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}");
+                $"{Application.productName}_{platformSetting.buildTarget.Name}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}");
         }
         public string GetVersionString()
         {
