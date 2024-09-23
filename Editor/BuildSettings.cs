@@ -51,6 +51,7 @@ namespace HexTecGames.BuildHelper.Editor
         public void BuildAll()
         {
             string oldVersionNumber = VersionNumber.GetCurrentVersion();
+            string oldProductName = PlayerSettings.productName;
             PlayerSettings.productName = gameName;
             VersionNumber.IncreaseVersion(updateType);
             updateType = UpdateType.None;
@@ -102,6 +103,7 @@ namespace HexTecGames.BuildHelper.Editor
                     }
                 }
                 ClearObjectFilters();
+                PlayerSettings.productName = oldProductName;
             }
         }
 
