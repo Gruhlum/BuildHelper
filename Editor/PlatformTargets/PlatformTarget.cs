@@ -1,6 +1,8 @@
+using HexTecGames.Basics;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -10,6 +12,8 @@ namespace HexTecGames.BuildHelper.Editor
     [System.Serializable]
     public abstract class PlatformTarget
     {
+        public bool createZip;
+
         public virtual string FileEnding
         {
             get
@@ -50,8 +54,36 @@ namespace HexTecGames.BuildHelper.Editor
 
         public virtual void OnBuildFinished(BuildSummary buildSummary)
         {
+            if (buildSummary.result == BuildResult.Succeeded)
+            {
+                if (createZip)
+                {
+                    CreateZipFile(buildSummary.outputPath);
+                }
+            }
         }
-
+        private string GetZipFilePath(string outputPath)
+        {
+            DirectoryInfo directoryInfo = new DirectoryInfo(outputPath);
+            //string newFolderName = directoryInfo.Name.Replace("WebGL", Application.productName);
+            return Path.Combine(directoryInfo.Parent.FullName, directoryInfo.Name);
+        }
+        private void CreateZipFile(string path)
+        {
+            string finalPath = GetZipFilePath(path) + ".zip";
+            if (File.Exists(finalPath))
+            {
+                CreateOldZipPath(finalPath);
+            }
+            ZipFile.CreateFromDirectory(path, finalPath);
+        }
+        private void CreateOldZipPath(string finalPath)
+        {
+            string oldName = Path.GetFileNameWithoutExtension(finalPath);
+            string newName = $"{oldName}_old";
+            string newPath = FileManager.GenerateUniqueFileName(finalPath.Replace(oldName, newName));
+            File.Move(finalPath, newPath);
+        }
         public override string ToString()
         {
             return Name;

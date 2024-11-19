@@ -15,7 +15,6 @@ namespace HexTecGames.BuildHelper.Editor
     {
         public string webGLTemplate = "Default";
 
-        public bool createZip;
         public int width = 900;
         public int height = 600;
 
@@ -33,13 +32,6 @@ namespace HexTecGames.BuildHelper.Editor
             {
                 return "WebGL";
             }
-        }
-
-        private string GetZipFilePath(string outputPath)
-        {
-            DirectoryInfo directoryInfo = new DirectoryInfo(outputPath);
-            string newFolderName = directoryInfo.Name.Replace("WebGL", Application.productName);
-            return Path.Combine(directoryInfo.Parent.FullName, newFolderName);
         }
 
         public override string GetLocationPath(string path, string fileName)
@@ -95,28 +87,6 @@ namespace HexTecGames.BuildHelper.Editor
             return fileName;
         }
 
-        public override void OnBuildFinished(BuildSummary buildSummary)
-        {
-            if (buildSummary.result == BuildResult.Succeeded)
-            {
-                CreateZipFile(buildSummary.outputPath);
-            }
-        }
-        private void CreateZipFile(string path)
-        {
-            string finalPath = GetZipFilePath(path) + ".zip";
-            if (File.Exists(finalPath))
-            {
-                CreateOldZipPath(finalPath);
-            }
-            ZipFile.CreateFromDirectory(path, finalPath);
-        }
-        private void CreateOldZipPath(string finalPath)
-        {
-            string oldName = Path.GetFileNameWithoutExtension(finalPath);
-            string newName = $"{oldName}_old";
-            string newPath = FileManager.GenerateUniqueFileName(finalPath.Replace(oldName, newName));
-            File.Move(finalPath, newPath);
-        }
+
     }
 }
