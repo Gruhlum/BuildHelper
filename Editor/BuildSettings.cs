@@ -77,11 +77,13 @@ namespace HexTecGames.BuildHelper.Editor
                     platformSetting.ApplySettings(storeSetting);
 
                     ApplyObjectFilters(platformSetting, storeSetting);
+
                     bool result = Build(platformSetting, storeSetting);
                     if (result)
                     {
                         success = true;
                     }
+                    ClearObjectFilters();
                 }
                 if (success)
                 {
@@ -102,7 +104,6 @@ namespace HexTecGames.BuildHelper.Editor
                         Process.Start(fullBuildPaths[0]);
                     }
                 }
-                ClearObjectFilters();
                 PlayerSettings.productName = oldProductName;
             }
         }
@@ -162,40 +163,68 @@ namespace HexTecGames.BuildHelper.Editor
         }
         private void ApplyObjectFilters(PlatformSettings activePlatform, StoreSettings activeStore)
         {
+            ApplyOtherFilterSettings(activePlatform, activeStore);
+            ApplyCurrentObjectFilters(activePlatform, activeStore);
+        }
+        private void ApplyCurrentObjectFilters(PlatformSettings platform, StoreSettings store)
+        {
+            foreach (var obj in platform.exclusiveObjects)
+            {
+                if (obj.mode == ObjectFilter.Mode.Include)
+                {
+                    obj.item.hideFlags = HideFlags.None;
+                }
+                else if (obj.mode == ObjectFilter.Mode.Exclude)
+                {
+                    obj.item.hideFlags = HideFlags.DontSaveInBuild;
+                }
+            }
+            foreach (var obj in store.exclusiveObjects)
+            {
+                if (obj.mode == ObjectFilter.Mode.Include)
+                {
+                    obj.item.hideFlags = HideFlags.None;
+                }
+                else if (obj.mode == ObjectFilter.Mode.Exclude)
+                {
+                    obj.item.hideFlags = HideFlags.DontSaveInBuild;
+                }
+            }
+        }
+        private void ApplyOtherFilterSettings(PlatformSettings activePlatform, StoreSettings activeStore)
+        {
             foreach (var platform in platformSettings)
             {
+                if (platform == activePlatform)
+                {
+                    continue;
+                }
                 foreach (var obj in platform.exclusiveObjects)
                 {
-                    if (obj.mode == ObjectFilter.Mode.Include && platform == activePlatform)
-                    {
-                        obj.item.hideFlags = HideFlags.None;
-                    }
-                    else if (obj.mode == ObjectFilter.Mode.Exclude && platform != activePlatform)
-                    {
-                        obj.item.hideFlags = HideFlags.None;
-                    }
-                    else
+                    if (obj.mode == ObjectFilter.Mode.Include)
                     {
                         obj.item.hideFlags = HideFlags.DontSaveInBuild;
-                        Debug.Log($"Exluded object: {obj.item.name} from: {activePlatform}, {activeStore}");
+                    }
+                    else if (obj.mode == ObjectFilter.Mode.Exclude)
+                    {
+                        obj.item.hideFlags = HideFlags.DontSaveInBuild;
                     }
                 }
                 foreach (var store in platform.storeSettings)
                 {
+                    if (store == activeStore)
+                    {
+                        return;
+                    }
                     foreach (var obj in store.exclusiveObjects)
                     {
-                        if (obj.mode == ObjectFilter.Mode.Include && store == activeStore)
-                        {
-                            obj.item.hideFlags = HideFlags.None;
-                        }
-                        else if (obj.mode == ObjectFilter.Mode.Exclude && store != activeStore)
-                        {
-                            obj.item.hideFlags = HideFlags.None;
-                        }
-                        else
+                        if (obj.mode == ObjectFilter.Mode.Include)
                         {
                             obj.item.hideFlags = HideFlags.DontSaveInBuild;
-                            Debug.Log($"Exluded object: {obj.item.name} from: {activePlatform}, {activeStore}");
+                        }
+                        else if (obj.mode == ObjectFilter.Mode.Exclude)
+                        {
+                            obj.item.hideFlags = HideFlags.None;
                         }
                     }
                 }
