@@ -1,8 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Threading;
 using UnityEditor;
@@ -37,7 +35,7 @@ namespace HexTecGames.BuildHelper.Editor
             {
                 gameName = Application.productName;
             }
-            foreach (var platformSetting in platformSettings)
+            foreach (PlatformSettings platformSetting in platformSettings)
             {
                 platformSetting.OnValidate();
             }
@@ -59,14 +57,14 @@ namespace HexTecGames.BuildHelper.Editor
 
             bool success = false;
 
-            foreach (var platformSetting in platformSettings)
+            foreach (PlatformSettings platformSetting in platformSettings)
             {
                 if (!platformSetting.include)
                 {
                     Debug.Log($"Skipped {platformSetting.buildTarget.Name} since it is not included");
                     continue;
                 }
-                foreach (var storeSetting in platformSetting.storeSettings)
+                foreach (StoreSettings storeSetting in platformSetting.storeSettings)
                 {
                     if (!storeSetting.include)
                     {
@@ -129,8 +127,10 @@ namespace HexTecGames.BuildHelper.Editor
 
             string path = GenerateFolders(platformSetting, storeSetting);
             fullBuildPaths.Add(path);
-            BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
-            buildPlayerOptions.scenes = GetSceneNames(platformSetting, storeSetting).ToArray();
+            BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
+            {
+                scenes = GetSceneNames(platformSetting, storeSetting).ToArray()
+            };
             string fileName = platformSetting.buildTarget.GetFileName(platformSetting, storeSetting, version);
             buildPlayerOptions.locationPathName = platformSetting.buildTarget.GetLocationPath(path, fileName);
             buildPlayerOptions.target = platformSetting.buildTarget.BuildTarget;
@@ -146,15 +146,15 @@ namespace HexTecGames.BuildHelper.Editor
         }
         private void ClearObjectFilters()
         {
-            foreach (var platform in platformSettings)
+            foreach (PlatformSettings platform in platformSettings)
             {
-                foreach (var obj in platform.exclusiveObjects)
+                foreach (ObjectFilter obj in platform.exclusiveObjects)
                 {
                     obj.item.hideFlags = HideFlags.None;
                 }
-                foreach (var store in platform.storeSettings)
+                foreach (StoreSettings store in platform.storeSettings)
                 {
-                    foreach (var obj in store.exclusiveObjects)
+                    foreach (ObjectFilter obj in store.exclusiveObjects)
                     {
                         obj.item.hideFlags = HideFlags.None;
                     }
@@ -168,7 +168,7 @@ namespace HexTecGames.BuildHelper.Editor
         }
         private void ApplyCurrentObjectFilters(PlatformSettings platform, StoreSettings store)
         {
-            foreach (var obj in platform.exclusiveObjects)
+            foreach (ObjectFilter obj in platform.exclusiveObjects)
             {
                 if (obj.mode == ObjectFilter.Mode.Include)
                 {
@@ -179,7 +179,7 @@ namespace HexTecGames.BuildHelper.Editor
                     obj.item.hideFlags = HideFlags.DontSaveInBuild;
                 }
             }
-            foreach (var obj in store.exclusiveObjects)
+            foreach (ObjectFilter obj in store.exclusiveObjects)
             {
                 if (obj.mode == ObjectFilter.Mode.Include)
                 {
@@ -193,13 +193,13 @@ namespace HexTecGames.BuildHelper.Editor
         }
         private void ApplyOtherFilterSettings(PlatformSettings activePlatform, StoreSettings activeStore)
         {
-            foreach (var platform in platformSettings)
+            foreach (PlatformSettings platform in platformSettings)
             {
                 if (platform == activePlatform)
                 {
                     continue;
                 }
-                foreach (var obj in platform.exclusiveObjects)
+                foreach (ObjectFilter obj in platform.exclusiveObjects)
                 {
                     if (obj.mode == ObjectFilter.Mode.Include)
                     {
@@ -210,13 +210,13 @@ namespace HexTecGames.BuildHelper.Editor
                         obj.item.hideFlags = HideFlags.DontSaveInBuild;
                     }
                 }
-                foreach (var store in platform.storeSettings)
+                foreach (StoreSettings store in platform.storeSettings)
                 {
                     if (store == activeStore)
                     {
                         return;
                     }
-                    foreach (var obj in store.exclusiveObjects)
+                    foreach (ObjectFilter obj in store.exclusiveObjects)
                     {
                         if (obj.mode == ObjectFilter.Mode.Include)
                         {
@@ -253,7 +253,7 @@ namespace HexTecGames.BuildHelper.Editor
             {
                 return;
             }
-            foreach (var setting in storeSettings)
+            foreach (StoreSettings setting in storeSettings)
             {
                 if (setting.copyFolders != null)
                 {
@@ -263,7 +263,7 @@ namespace HexTecGames.BuildHelper.Editor
         }
         public void CopyFolders(StoreSettings storeSetting)
         {
-            foreach (var copyFolder in storeSetting.copyFolders)
+            foreach (FolderCopyLocation copyFolder in storeSetting.copyFolders)
             {
                 if (copyFolder.versionType != version)
                 {
@@ -286,14 +286,14 @@ namespace HexTecGames.BuildHelper.Editor
         }
         public void CopyFolders(string source, string target)
         {
-            var results = Directory.GetFiles(source);
-            foreach (var result in results)
+            string[] results = Directory.GetFiles(source);
+            foreach (string result in results)
             {
                 File.Copy(result, result.Replace(source, target), true);
             }
-            var directories = Directory.GetDirectories(source);
+            string[] directories = Directory.GetDirectories(source);
             {
-                foreach (var directory in directories)
+                foreach (string directory in directories)
                 {
                     if (directory.Contains("DoNotShip"))
                     {
@@ -334,9 +334,9 @@ namespace HexTecGames.BuildHelper.Editor
         public int GetTotalBuilds()
         {
             int count = 0;
-            foreach (var platform in platformSettings)
+            foreach (PlatformSettings platform in platformSettings)
             {
-                foreach (var store in platform.storeSettings)
+                foreach (StoreSettings store in platform.storeSettings)
                 {
                     count++;
                 }
@@ -346,13 +346,13 @@ namespace HexTecGames.BuildHelper.Editor
         public int GetTotalActiveBuilds()
         {
             int count = 0;
-            foreach (var platform in platformSettings)
+            foreach (PlatformSettings platform in platformSettings)
             {
                 if (!platform.include)
                 {
                     continue;
                 }
-                foreach (var store in platform.storeSettings)
+                foreach (StoreSettings store in platform.storeSettings)
                 {
                     if (store.include)
                     {
@@ -385,7 +385,7 @@ namespace HexTecGames.BuildHelper.Editor
                 return sceneNames;
             }
             sceneOrders = sceneOrders.OrderBy(x => x.order).ToList();
-            foreach (var sceneOrder in sceneOrders)
+            foreach (SceneOrder sceneOrder in sceneOrders)
             {
                 string path = AssetDatabase.GetAssetPath(sceneOrder.scene);
                 sceneNames.Add(path);

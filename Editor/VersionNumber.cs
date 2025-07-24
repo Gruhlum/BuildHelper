@@ -1,8 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
-using UnityEngine;
 
 namespace HexTecGames.BuildHelper.Editor
 {
@@ -29,7 +25,7 @@ namespace HexTecGames.BuildHelper.Editor
             int medium = 0;
             int minor = 0;
 
-            var results = result.Split(".");
+            string[] results = result.Split(".");
 
             if (results.Length == 3)
             {

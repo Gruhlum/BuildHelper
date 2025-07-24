@@ -1,12 +1,6 @@
-using HexTecGames.Basics;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using UnityEditor;
-using UnityEditor.Build.Reporting;
-using UnityEngine;
 
 namespace HexTecGames.BuildHelper.Editor
 {
@@ -50,7 +44,7 @@ namespace HexTecGames.BuildHelper.Editor
             }
             else targetTemplate = webGLTemplate;
 
-            foreach (var result in results)
+            foreach (string result in results)
             {
                 folderNames = result.Split(new char[] { '/', '\\' });
                 if (folderNames.Contains(targetTemplate))
@@ -65,9 +59,9 @@ namespace HexTecGames.BuildHelper.Editor
         private List<string> GetAllFolderPaths(string startFolder)
         {
             List<string> folderNames = new List<string>();
-            var results = AssetDatabase.GetSubFolders(startFolder);
+            string[] results = AssetDatabase.GetSubFolders(startFolder);
             folderNames.AddRange(results);
-            foreach (var result in results)
+            foreach (string result in results)
             {
                 folderNames.AddRange(GetAllFolderPaths(result));
             }

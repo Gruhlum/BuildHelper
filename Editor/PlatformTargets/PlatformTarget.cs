@@ -1,11 +1,8 @@
-using HexTecGames.Basics;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using HexTecGames.Basics;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
-using UnityEngine;
 
 namespace HexTecGames.BuildHelper.Editor
 {
