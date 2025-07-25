@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using HexTecGames.Basics.Editor;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -48,10 +49,10 @@ namespace HexTecGames.BuildHelper.Editor
         [ContextMenu("Build All")]
         public void BuildAll()
         {
-            string oldVersionNumber = VersionNumber.GetCurrentVersion();
+            //string oldVersionNumber = VersionNumber.GetCurrentVersion();
             string oldProductName = PlayerSettings.productName;
             PlayerSettings.productName = gameName;
-            VersionNumber.IncreaseVersion(updateType);
+            //VersionNumber.IncreaseVersion(updateType);
             updateType = UpdateType.None;
             fullBuildPaths.Clear();
 
@@ -93,7 +94,7 @@ namespace HexTecGames.BuildHelper.Editor
                         Process.Start(fullBuildPaths[0]);
                     }
                 }
-                else VersionNumber.SetVersionNumber(oldVersionNumber);
+                //else VersionNumber.SetVersionNumber(oldVersionNumber);
 
                 if (success)
                 {
@@ -324,12 +325,16 @@ namespace HexTecGames.BuildHelper.Editor
         private string GetBuildFolderPath(PlatformSettings platformSetting, StoreSettings storeSetting)
         {
             //../Assets/Builds/WindowsStandalone64/Windows_Steam_1.0.0/
-            return Path.Combine(GetBuildFolderPath(), platformSetting.buildTarget.Name,
-                $"{Application.productName}_{platformSetting.buildTarget.Name}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}");
+
+            return null;
+
+            //return Path.Combine(GetBuildFolderPath(), platformSetting.buildTarget.Name,
+            //    $"{Application.productName}_{platformSetting.buildTarget.Name}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}");
         }
         public string GetVersionString()
         {
-            return VersionNumber.GetVersionNumber(updateType);
+            //return VersionNumber.GetVersionNumber(updateType);
+            return null;
         }
         public int GetTotalBuilds()
         {

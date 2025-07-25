@@ -72,11 +72,13 @@ namespace HexTecGames.BuildHelper.Editor
         {
             string fileName;
 
-            if (version == VersionType.Demo)
-            {
-                fileName = $"{PlayerSettings.productName}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}_demo{platformSetting.fileEnding}";
-            }
-            else fileName = $"{PlayerSettings.productName}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}{platformSetting.fileEnding}";
+            return null;
+
+            //if (version == VersionType.Demo)
+            //{
+            //    fileName = $"{PlayerSettings.productName}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}_demo{platformSetting.fileEnding}";
+            //}
+            //else fileName = $"{PlayerSettings.productName}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}{platformSetting.fileEnding}";
 
             return fileName;
         }
