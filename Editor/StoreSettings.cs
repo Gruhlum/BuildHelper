@@ -20,10 +20,12 @@ namespace HexTecGames.BuildHelper.Editor
         [Tooltip("Used to copy the build folders to another location")]
         public List<FolderCopyLocation> copyFolders;
 
-        [Tooltip("Location of the external script")]
-        public string externalScript;
-        [Tooltip("Should this script be run after Build is complete")]
         public bool runExternalScript;
+        [Tooltip("Location of the external script")]
+        [TextArea] public string scriptPath 
+            = "C:\\Users\\NAME\\Documents\\Projects\\steamworks_sdk_157\\sdk\\tools\\ContentBuilder\\scripts\\[NAME]_app_build.vdf";
+        [TextArea] public string arguments = "+login [LOGIN] +run_app_build ..\\scripts\\[FILENAME_app_build].vdf";
+        [Tooltip("Should this script be run after Build is complete")]
 
 
         public bool HasSettingsOverride<T>(out T t) where T : SettingsOverride

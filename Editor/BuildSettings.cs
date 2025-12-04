@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using HexTecGames.Basics;
 using HexTecGames.Basics.Editor;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
@@ -49,7 +50,7 @@ namespace HexTecGames.BuildHelper.Editor
         [ContextMenu("Build All")]
         public void BuildAll()
         {
-            //string oldVersionNumber = VersionNumber.GetCurrentVersion();
+            var oldVersionNumber = VersionNumber.GetVersionNumber();
             string oldProductName = PlayerSettings.productName;
             PlayerSettings.productName = gameName;
             //VersionNumber.IncreaseVersion(updateType);
@@ -88,23 +89,21 @@ namespace HexTecGames.BuildHelper.Editor
                 {
                     CopyFolders(platformSetting.storeSettings);
                     RunExternalScript(platformSetting.storeSettings);
-
-                    if (fullBuildPaths != null && fullBuildPaths.Count > 0)
-                    {
-                        Process.Start(fullBuildPaths[0]);
-                    }
                 }
-                //else VersionNumber.SetVersionNumber(oldVersionNumber);
-
-                if (success)
-                {
-                    if (fullBuildPaths != null && fullBuildPaths.Count > 0)
-                    {
-                        Process.Start(fullBuildPaths[0]);
-                    }
-                }
-                PlayerSettings.productName = oldProductName;
+                else Debug.Log("Failed Build: " + platformSetting.ToString());
             }
+            if (success)
+            {
+                if (fullBuildPaths != null && fullBuildPaths.Count > 0)
+                {
+                    Process.Start(fullBuildPaths[0]);
+                }
+            }
+            else VersionNumber.SetBuildVersionNumber(oldVersionNumber);
+
+            PlayerSettings.productName = oldProductName;
+
+            Debug.Log("Build Success: " + success);
         }
 
         private bool Build(PlatformSettings platformSetting, StoreSettings storeSetting)
@@ -231,6 +230,32 @@ namespace HexTecGames.BuildHelper.Editor
                 }
             }
         }
+
+        private void RunScript(string fileName, string arguments)
+        {
+            ProcessStartInfo psi = new ProcessStartInfo
+            {
+                FileName = fileName,
+                Arguments = arguments,
+                //WorkingDirectory = @"C:\Users\Patrick\Documents\Projects\steamworks_sdk_157\sdk\tools\ContentBuilder",
+                //RedirectStandardOutput = true,
+                //RedirectStandardError = true,
+                UseShellExecute = true,
+                CreateNoWindow = false
+            };
+
+            Process.Start(psi);
+            //using (Process proc = Process.Start(psi))
+            //{
+            //    string output = proc.StandardOutput.ReadToEnd();
+            //    string error = proc.StandardError.ReadToEnd();
+            //    proc.WaitForExit();
+
+            //    Debug.Log("Output: " + output);
+            //    Debug.Log("Error: " + error);
+            //}
+        }
+
         private void RunExternalScript(List<StoreSettings> storeSettings)
         {
             StoreSettings activeSetting = storeSettings.Find(x => x.include);
@@ -242,11 +267,11 @@ namespace HexTecGames.BuildHelper.Editor
             {
                 return;
             }
-            if (string.IsNullOrEmpty(activeSetting.externalScript))
+            if (string.IsNullOrEmpty(activeSetting.scriptPath))
             {
                 return;
             }
-            Process.Start(activeSetting.externalScript);
+            RunScript(activeSetting.scriptPath, activeSetting.arguments);
         }
         private void CopyFolders(List<StoreSettings> storeSettings)
         {
@@ -326,15 +351,12 @@ namespace HexTecGames.BuildHelper.Editor
         {
             //../Assets/Builds/WindowsStandalone64/Windows_Steam_1.0.0/
 
-            return null;
-
-            //return Path.Combine(GetBuildFolderPath(), platformSetting.buildTarget.Name,
-            //    $"{Application.productName}_{platformSetting.buildTarget.Name}_{storeSetting.name}_{VersionNumber.GetCurrentVersion()}");
+            return Path.Combine(GetBuildFolderPath(), platformSetting.buildTarget.Name,
+            $"{Application.productName}_{platformSetting.buildTarget.Name}_{storeSetting.name}_{GetVersionString()}");
         }
         public string GetVersionString()
         {
-            //return VersionNumber.GetVersionNumber(updateType);
-            return null;
+            return VersionNumber.GetVersionNumber(updateType).ToString();
         }
         public int GetTotalBuilds()
         {
@@ -351,8 +373,18 @@ namespace HexTecGames.BuildHelper.Editor
         public int GetTotalActiveBuilds()
         {
             int count = 0;
+
+            if (platformSettings == null)
+            {
+                return 0;
+            }
+
             foreach (PlatformSettings platform in platformSettings)
             {
+                if (platform.storeSettings == null)
+                {
+                    continue;
+                }
                 if (!platform.include)
                 {
                     continue;
@@ -369,6 +401,11 @@ namespace HexTecGames.BuildHelper.Editor
         }
         public static void TryCreateDirectory(string path)
         {
+            if (string.IsNullOrEmpty(path))
+            {
+                Debug.Log("Path is null!");
+                return;
+            }
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
         }
