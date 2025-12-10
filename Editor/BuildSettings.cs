@@ -51,9 +51,9 @@ namespace HexTecGames.BuildHelper.Editor
         public void BuildAll()
         {
             var oldVersionNumber = VersionNumber.GetVersionNumber();
+            VersionNumber.SetBuildVersionNumber(oldVersionNumber.GetIncreasedVersion(updateType));
             string oldProductName = PlayerSettings.productName;
             PlayerSettings.productName = gameName;
-            //VersionNumber.IncreaseVersion(updateType);
             updateType = UpdateType.None;
             fullBuildPaths.Clear();
 
