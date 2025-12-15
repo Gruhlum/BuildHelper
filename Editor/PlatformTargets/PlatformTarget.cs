@@ -65,14 +65,42 @@ namespace HexTecGames.BuildHelper.Editor
             //string newFolderName = directoryInfo.Name.Replace("WebGL", Application.productName);
             return Path.Combine(directoryInfo.Parent.FullName, directoryInfo.Name);
         }
+        public static void CreateFilteredZip(string sourceDir, string destinationZip)
+        {
+            if (File.Exists(destinationZip))
+            {
+                File.Delete(destinationZip);
+            }
+
+            using (var archive = ZipFile.Open(destinationZip, ZipArchiveMode.Create))
+            {
+                foreach (var file in Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories))
+                {
+                    // Skip any file whose path contains "DoNotShip"
+                    if (file.Contains("DoNotShip"))
+                    {
+                        continue;
+                    }
+
+                    string relativePath = Path.GetRelativePath(sourceDir, file);
+                    archive.CreateEntryFromFile(file, relativePath);
+                }
+            }
+        }
         private void CreateZipFile(string path)
         {
+            if (File.Exists(path))
+            {
+                FileInfo fileInfo = new FileInfo(path);
+                path = fileInfo.DirectoryName;
+            }
+
             string finalPath = GetZipFilePath(path) + ".zip";
             if (File.Exists(finalPath))
             {
                 CreateOldZipPath(finalPath);
             }
-            ZipFile.CreateFromDirectory(path, finalPath);
+            CreateFilteredZip(path, finalPath);
         }
         private void CreateOldZipPath(string finalPath)
         {
