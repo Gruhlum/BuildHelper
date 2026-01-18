@@ -135,6 +135,10 @@ namespace HexTecGames.BuildHelper.Editor
             buildPlayerOptions.locationPathName = platformSetting.buildTarget.GetLocationPath(path, fileName);
             buildPlayerOptions.target = platformSetting.buildTarget.BuildTarget;
             buildPlayerOptions.options = options;
+            if (version == VersionType.Demo)
+            {
+                buildPlayerOptions.extraScriptingDefines = new string[] { "DEMO" };
+            }
 
             Thread.Sleep(100);
             return BuildPipeline.BuildPlayer(buildPlayerOptions);
