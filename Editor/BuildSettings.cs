@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -13,23 +15,35 @@ using Debug = UnityEngine.Debug;
 namespace HexTecGames.BuildHelper.Editor
 {
 
-    [CreateAssetMenu(fileName = "BuildSettings", menuName = "HexTecGames/Editor/BuildSettings")]
+    [CreateAssetMenu(fileName = "BuildSettings", menuName = "HexTecGames/Editor/BuildHelper/BuildSettings")]
     public class BuildSettings : ScriptableObject
     {
         public string gameName;
-        public VersionType version;
+        public VersionType versionType;
         public UpdateType updateType;
-        public BuildOptions options;
-
+        public BuildOptions buildOptions;
+        //External not working yet
+        [HideInInspector] public BuilderType builderType;
+        public enum BuilderType { @internal, external }
         [Tooltip("Scenes to be added to the Build")]
         public List<SceneOrder> scenes;
 
-        public List<PlatformSettings> platformSettings;
+        [InlineSO(true)]
+        public List<Platform> platforms;
 
         private List<string> fullBuildPaths = new List<string>();
+        public VersionNumber lastBuildVersion = new VersionNumber(0, 0, 0);
 
         public static BuildSettings instance;
         private const string BUILD_FOLDER_NAME = "Builds";
+        public const string CONFIG_FOLDER_NAME = "BuildHelper";
+        private const string DATA_FILE_NAME = "Data.txt";
+        public const string RESULT_PATH = CONFIG_FOLDER_NAME + "/ExternalBuildResult.txt";
+
+        [SerializeField] private Queue<BuildData> buildDatas = default;
+        private string oldProductName;
+        private VersionNumber oldVersion;
+        private event Action<string> OnBuildEnded;
 
         private void OnValidate()
         {
@@ -37,327 +51,241 @@ namespace HexTecGames.BuildHelper.Editor
             {
                 gameName = Application.productName;
             }
-            foreach (PlatformSettings platformSetting in platformSettings)
-            {
-                platformSetting.OnValidate();
-            }
         }
         private void Awake()
         {
             instance = this;
         }
+        private void OnEnable()
+        {
+            Debug.Log("OnEnable!");
+            LoadLastBuildVersion();
+        }
+        private Queue<BuildData> CreateAllBuildDatas()
+        {
+            Queue<BuildData> buildDatas = new Queue<BuildData>();
+            foreach (var platform in platforms)
+            {
+                if (!platform.include)
+                {
+                    continue;
+                }
+                foreach (var store in platform.Stores)
+                {
+                    if (store.include)
+                    {
+                        buildDatas.Enqueue(new BuildData(platform, store, versionType, buildOptions, CreatePath(platform, store), scenes));
+                    }
+                }
+            }
+
+            return buildDatas;
+        }
 
         [ContextMenu("Build All")]
         public void BuildAll()
         {
-            var oldVersionNumber = VersionNumber.GetVersionNumber();
-            VersionNumber.SetBuildVersionNumber(oldVersionNumber.GetIncreasedVersion(updateType));
-            string oldProductName = PlayerSettings.productName;
+            if (GetTotalActiveBuilds() <= 0)
+            {
+                Debug.Log("No active Builds!");
+                return;
+            }
+
+            oldVersion = VersionNumber.GetVersionNumber();
+            VersionNumber.SetBuildVersionNumber(oldVersion.GetIncreasedVersion(updateType));
+            oldProductName = PlayerSettings.productName;
             PlayerSettings.productName = gameName;
-            updateType = UpdateType.None;
             fullBuildPaths.Clear();
 
-            bool success = false;
+            buildDatas = CreateAllBuildDatas();
 
-            foreach (PlatformSettings platformSetting in platformSettings)
+            if (buildDatas == null || buildDatas.Count <= 0)
             {
-                if (!platformSetting.include)
-                {
-                    Debug.Log($"Skipped {platformSetting.buildTarget.Name} since it is not included");
-                    continue;
-                }
-                foreach (StoreSettings storeSetting in platformSetting.storeSettings)
-                {
-                    if (!storeSetting.include)
-                    {
-                        Debug.Log($"Skipped {storeSetting.name} since it is not included");
-                        continue;
-                    }
-
-                    platformSetting.ApplySettings(storeSetting);
-
-                    ApplyObjectFilters(platformSetting, storeSetting);
-
-                    bool result = Build(platformSetting, storeSetting);
-                    if (result)
-                    {
-                        success = true;
-                    }
-                    ClearObjectFilters();
-                }
-                if (success)
-                {
-                    CopyFolders(platformSetting.storeSettings);
-                    RunExternalScript(platformSetting.storeSettings);
-                }
-                else Debug.Log("Failed Build: " + platformSetting.ToString());
+                Debug.Log("No BuildDatas!");
+                return;
             }
-            if (success)
+            if (builderType == BuilderType.@internal)
             {
-                if (fullBuildPaths != null && fullBuildPaths.Count > 0)
-                {
-                    Process.Start(fullBuildPaths[0]);
-                }
+                BuildInternal();
             }
-            else VersionNumber.SetBuildVersionNumber(oldVersionNumber);
+            else BuildExternal();
+        }
 
+        private void SaveLastBuildVersion()
+        {
+            FileManager.WriteToFile(CONFIG_FOLDER_NAME, DATA_FILE_NAME, lastBuildVersion.ToString());
+        }
+        private void LoadLastBuildVersion()
+        {
+            if (FileManager.FileExists(CONFIG_FOLDER_NAME, DATA_FILE_NAME))
+            {
+                var result = FileManager.ReadFile(CONFIG_FOLDER_NAME, DATA_FILE_NAME);
+                lastBuildVersion = new VersionNumber(result[0]);
+            }
+        }
+        private void AfterBuildsComplete(bool success)
+        {
             PlayerSettings.productName = oldProductName;
 
-            Debug.Log("Build Success: " + success);
+            updateType = UpdateType.Minor;
+            TryOpeningBuildFolder();
+            buildDatas.Clear();
+            fullBuildPaths.Clear();
+            if (success)
+            {
+                lastBuildVersion = VersionNumber.GetVersionNumber();
+            }
+            SaveLastBuildVersion();
         }
 
-        private bool Build(PlatformSettings platformSetting, StoreSettings storeSetting)
+        private void RunExternalBuild(BuildData buildData)
         {
-            BuildReport report = BuildPlatform(platformSetting, storeSetting);
-            BuildSummary summary = report.summary;
-            platformSetting.OnBuildFinished(summary);
+            string configPath = "BuildHelper/ExternalBuildConfig.json";
+            Directory.CreateDirectory(CONFIG_FOLDER_NAME);
+            File.WriteAllText(configPath, JsonUtility.ToJson(buildData));
 
-            if (summary.result == BuildResult.Succeeded)
+            if (File.Exists(RESULT_PATH))
             {
-                return true;
+                File.Delete(RESULT_PATH);
             }
-            else return false;
+
+            string unityExe = EditorApplication.applicationPath;
+            string projectPath = Directory.GetCurrentDirectory();
+
+            var args =
+                "-batchmode " +
+                "-quit " +
+                $"-projectPath \"{projectPath}\" " +
+                $"-executeMethod HexTecGames.BuildHelper.Editor.ExternalBuilder.PerformBuild " +
+                $"-configPath \"{configPath}\"";
+
+            Debug.Log("Starting External Builder");
+
+            Process.Start(unityExe, args);
         }
-        private BuildReport BuildPlatform(PlatformSettings platformSetting, StoreSettings storeSetting)
+
+        private void BuildEnded(string result)
         {
-            if (platformSetting.buildTarget == null)
-            {
-                Debug.LogError("No build target selected");
-            }
+            EditorApplication.update += Check;
+            OnBuildEnded -= BuildEnded;
 
-            string path = GenerateFolders(platformSetting, storeSetting);
-            fullBuildPaths.Add(path);
-            BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions
+            foreach (var platform in platforms)
             {
-                scenes = GetSceneNames(platformSetting, storeSetting).ToArray()
-            };
-            string fileName = platformSetting.buildTarget.GetFileName(platformSetting, storeSetting, version);
-            buildPlayerOptions.locationPathName = platformSetting.buildTarget.GetLocationPath(path, fileName);
-            buildPlayerOptions.target = platformSetting.buildTarget.BuildTarget;
-            buildPlayerOptions.options = options;
-            if (version == VersionType.Demo)
-            {
-                buildPlayerOptions.extraScriptingDefines = new string[] { "DEMO" };
+                platform.OnAfterBuild(buildDatas.Peek(), result.Contains("SUCCESS"));
+                Debug.Log("Successfully build: " + buildDatas.Peek().ToString());
             }
+            buildDatas.Dequeue();
 
-            Thread.Sleep(100);
-            return BuildPipeline.BuildPlayer(buildPlayerOptions);
+            if (buildDatas.Count <= 0)
+            {
+                AfterBuildsComplete(result.Contains("SUCCESS"));
+            }
+            else BuildExternal(buildDatas.Peek());
+        }
+        private void BuildInternal()
+        {
+            List<string> debugs = new List<string>();
+            bool anySuccess = false;
+            foreach (var buildData in buildDatas)
+            {
+                foreach (var platform in platforms)
+                {
+                    platform.OnBeforeBuild(buildData);
+                }
+
+                var report = BuildPipeline.BuildPlayer(buildData.GenerateBuildPlayerOptions());
+                debugs.Add($"Build: {buildData.platform} | {buildData.store} {report.summary.result}");
+                bool success = report.summary.result == BuildResult.Succeeded;
+
+                if (success)
+                {
+                    fullBuildPaths.Add(buildData.GetPlatformPath());
+                    anySuccess = true;
+                }
+                foreach (var platform in platforms)
+                {
+                    platform.OnAfterBuild(buildData, success);
+                }
+            }
+            foreach (var debug in debugs)
+            {
+                Debug.Log(debug);
+            }
+            if (fullBuildPaths.Count <= 0)
+            {
+                VersionNumber.SetBuildVersionNumber(oldVersion);
+            }
+            AfterBuildsComplete(anySuccess);
+        }
+        private void BuildExternal()
+        {
+            BuildExternal(buildDatas.Peek());
+        }
+        private void BuildExternal(BuildData buildData)
+        {
+            foreach (var platform in platforms)
+            {
+                platform.OnBeforeBuild(buildData);
+            }
+            EditorApplication.update += Check;
+            OnBuildEnded += BuildEnded;
+            RunExternalBuild(buildData);
+        }
+        private void Check()
+        {
+            if (File.Exists(RESULT_PATH))
+            {
+                EditorApplication.update -= Check;
+                string result = File.ReadAllText(RESULT_PATH);
+                OnBuildEnded?.Invoke(result);
+            }
+        }
+
+        private string CreatePath(Platform activePlatform, Store activeStore)
+        {
+            string path = GetApplicationPath(activePlatform, activeStore);
+            Directory.CreateDirectory(path);
+            return path;
         }
         public void OpenBuildFolder()
         {
-            TryCreateDirectory(GetBuildFolderPath());
-            Process.Start(GetBuildFolderPath());
+            string buildFolderPath = Path.Combine(Directory.GetCurrentDirectory(), BUILD_FOLDER_NAME);
+            Directory.CreateDirectory(buildFolderPath);
+            Process.Start(buildFolderPath);
         }
-        private void ClearObjectFilters()
+        private void TryOpeningBuildFolder()
         {
-            foreach (PlatformSettings platform in platformSettings)
+            if (fullBuildPaths != null && fullBuildPaths.Count > 0)
             {
-                foreach (ObjectFilter obj in platform.exclusiveObjects)
+                Debug.Log("HERE: " + fullBuildPaths[0]);
+                if (!ExplorerUtils.IsFolderOrParentOpen(fullBuildPaths[0]))
                 {
-                    obj.item.hideFlags = HideFlags.None;
-                }
-                foreach (StoreSettings store in platform.storeSettings)
-                {
-                    foreach (ObjectFilter obj in store.exclusiveObjects)
-                    {
-                        obj.item.hideFlags = HideFlags.None;
-                    }
+                    Process.Start("explorer.exe", fullBuildPaths[0]);
                 }
             }
         }
-        private void ApplyObjectFilters(PlatformSettings activePlatform, StoreSettings activeStore)
+        private string GetApplicationPath(Platform platform, Store store)
         {
-            ApplyOtherFilterSettings(activePlatform, activeStore);
-            ApplyCurrentObjectFilters(activePlatform, activeStore);
-        }
-        private void ApplyCurrentObjectFilters(PlatformSettings platform, StoreSettings store)
-        {
-            foreach (ObjectFilter obj in platform.exclusiveObjects)
-            {
-                if (obj.mode == ObjectFilter.Mode.Include)
-                {
-                    obj.item.hideFlags = HideFlags.None;
-                }
-                else if (obj.mode == ObjectFilter.Mode.Exclude)
-                {
-                    obj.item.hideFlags = HideFlags.DontSaveInBuild;
-                }
-            }
-            foreach (ObjectFilter obj in store.exclusiveObjects)
-            {
-                if (obj.mode == ObjectFilter.Mode.Include)
-                {
-                    obj.item.hideFlags = HideFlags.None;
-                }
-                else if (obj.mode == ObjectFilter.Mode.Exclude)
-                {
-                    obj.item.hideFlags = HideFlags.DontSaveInBuild;
-                }
-            }
-        }
-        private void ApplyOtherFilterSettings(PlatformSettings activePlatform, StoreSettings activeStore)
-        {
-            foreach (PlatformSettings platform in platformSettings)
-            {
-                if (platform == activePlatform)
-                {
-                    continue;
-                }
-                foreach (ObjectFilter obj in platform.exclusiveObjects)
-                {
-                    if (obj.mode == ObjectFilter.Mode.Include)
-                    {
-                        obj.item.hideFlags = HideFlags.DontSaveInBuild;
-                    }
-                    else if (obj.mode == ObjectFilter.Mode.Exclude)
-                    {
-                        obj.item.hideFlags = HideFlags.DontSaveInBuild;
-                    }
-                }
-                foreach (StoreSettings store in platform.storeSettings)
-                {
-                    if (store == activeStore)
-                    {
-                        return;
-                    }
-                    foreach (ObjectFilter obj in store.exclusiveObjects)
-                    {
-                        if (obj.mode == ObjectFilter.Mode.Include)
-                        {
-                            obj.item.hideFlags = HideFlags.DontSaveInBuild;
-                        }
-                        else if (obj.mode == ObjectFilter.Mode.Exclude)
-                        {
-                            obj.item.hideFlags = HideFlags.None;
-                        }
-                    }
-                }
-            }
+            //ProjectName/Builds/Platform/Platform_Store_0.0.0
+            return Path.Combine(
+                Directory.GetCurrentDirectory(),
+                BUILD_FOLDER_NAME,
+                platform.buildTarget.Name,
+                GetApplicationFolderName(platform, store));
         }
 
-        private void RunScript(string fileName, string arguments)
+        private string GetApplicationFolderName(Platform platform, Store store)
         {
-            ProcessStartInfo psi = new ProcessStartInfo
+            string versionSuffix;
+            if (versionType == VersionType.Demo)
             {
-                FileName = fileName,
-                Arguments = arguments,
-                //WorkingDirectory = @"C:\Users\Patrick\Documents\Projects\steamworks_sdk_157\sdk\tools\ContentBuilder",
-                //RedirectStandardOutput = true,
-                //RedirectStandardError = true,
-                UseShellExecute = true,
-                CreateNoWindow = false
-            };
+                versionSuffix = $"{GetVersionString()}_Demo";
+            }
+            else versionSuffix = GetVersionString();
 
-            Process.Start(psi);
-            //using (Process proc = Process.Start(psi))
-            //{
-            //    string output = proc.StandardOutput.ReadToEnd();
-            //    string error = proc.StandardError.ReadToEnd();
-            //    proc.WaitForExit();
-
-            //    Debug.Log("Output: " + output);
-            //    Debug.Log("Error: " + error);
-            //}
+            return $"{Application.productName}_{platform.buildTarget.Name}_{store.name}_{versionSuffix}";
         }
 
-        private void RunExternalScript(List<StoreSettings> storeSettings)
-        {
-            StoreSettings activeSetting = storeSettings.Find(x => x.include);
-            if (activeSetting == null)
-            {
-                return;
-            }
-            if (!activeSetting.runExternalScript)
-            {
-                return;
-            }
-            if (string.IsNullOrEmpty(activeSetting.scriptPath))
-            {
-                return;
-            }
-            RunScript(activeSetting.scriptPath, activeSetting.arguments);
-        }
-        private void CopyFolders(List<StoreSettings> storeSettings)
-        {
-            if (storeSettings == null)
-            {
-                return;
-            }
-            foreach (StoreSettings setting in storeSettings)
-            {
-                if (setting.copyFolders != null)
-                {
-                    CopyFolders(setting);
-                }
-            }
-        }
-        public void CopyFolders(StoreSettings storeSetting)
-        {
-            foreach (FolderCopyLocation copyFolder in storeSetting.copyFolders)
-            {
-                if (copyFolder.versionType != version)
-                {
-                    continue;
-                }
-                PlatformSettings platformSetting = platformSettings.Find(x => x.buildTarget.BuildTarget == copyFolder.buildTarget);
-                if (platformSetting == null)
-                {
-                    Debug.Log("no build found: " + platformSetting.buildTarget.Name);
-                    continue;
-                }
-                string sourceLocation = Path.Combine(Application.dataPath, GetBuildFolderPath(platformSetting, storeSetting));
-                if (!Directory.Exists(sourceLocation))
-                {
-                    Debug.Log("no files found for " + platformSetting.buildTarget.Name);
-                    continue;
-                }
-                CopyFolders(sourceLocation, copyFolder.targetLocation);
-            }
-        }
-        public void CopyFolders(string source, string target)
-        {
-            string[] results = Directory.GetFiles(source);
-            foreach (string result in results)
-            {
-                File.Copy(result, result.Replace(source, target), true);
-            }
-            string[] directories = Directory.GetDirectories(source);
-            {
-                foreach (string directory in directories)
-                {
-                    if (directory.Contains("DoNotShip"))
-                    {
-                        continue;
-                    }
-                    Directory.CreateDirectory(directory.Replace(source, target));
-                    CopyFolders(directory, directory.Replace(source, target));
-                }
-            }
-        }
-        private string GenerateFolders(PlatformSettings platformSetting, StoreSettings storeSetting)
-        {
-            string lastPath = Directory.GetCurrentDirectory(); //..ProjectName
-            lastPath = Path.Combine(lastPath, "Builds"); //ProjectName/Builds
-            TryCreateDirectory(lastPath);
-            lastPath = Path.Combine(lastPath, platformSetting.buildTarget.Name); //ProjectName/Builds/Platform
-            TryCreateDirectory(lastPath);
-
-            lastPath = GetBuildFolderPath(platformSetting, storeSetting); //ProjectName/Builds/Platform/Platform_Store_0.0.0
-            TryCreateDirectory(lastPath);
-
-            return lastPath;
-        }
-        public string GetBuildFolderPath()
-        {
-            return Path.Combine(Directory.GetCurrentDirectory(), BUILD_FOLDER_NAME);
-        }
-        private string GetBuildFolderPath(PlatformSettings platformSetting, StoreSettings storeSetting)
-        {
-            //../Assets/Builds/WindowsStandalone64/Windows_Steam_1.0.0/
-
-            return Path.Combine(GetBuildFolderPath(), platformSetting.buildTarget.Name,
-            $"{Application.productName}_{platformSetting.buildTarget.Name}_{storeSetting.name}_{GetVersionString()}");
-        }
         public string GetVersionString()
         {
             return VersionNumber.GetVersionNumber(updateType).ToString();
@@ -365,11 +293,24 @@ namespace HexTecGames.BuildHelper.Editor
         public int GetTotalBuilds()
         {
             int count = 0;
-            foreach (PlatformSettings platform in platformSettings)
+
+            if (platforms == null)
             {
-                foreach (StoreSettings store in platform.storeSettings)
+                return 0;
+            }
+
+            foreach (Platform platform in platforms)
+            {
+                if (platform == null || platform.Stores == null)
                 {
-                    count++;
+                    continue;
+                }
+                foreach (var store in platform.Stores)
+                {
+                    if (store != null)
+                    {
+                        count++;
+                    }
                 }
             }
             return count;
@@ -378,14 +319,14 @@ namespace HexTecGames.BuildHelper.Editor
         {
             int count = 0;
 
-            if (platformSettings == null)
+            if (platforms == null)
             {
                 return 0;
             }
 
-            foreach (PlatformSettings platform in platformSettings)
+            foreach (Platform platform in platforms)
             {
-                if (platform.storeSettings == null)
+                if (platform == null || platform.Stores == null)
                 {
                     continue;
                 }
@@ -393,8 +334,12 @@ namespace HexTecGames.BuildHelper.Editor
                 {
                     continue;
                 }
-                foreach (StoreSettings store in platform.storeSettings)
+                foreach (var store in platform.Stores)
                 {
+                    if (store == null)
+                    {
+                        continue;
+                    }
                     if (store.include)
                     {
                         count++;
@@ -402,41 +347,6 @@ namespace HexTecGames.BuildHelper.Editor
                 }
             }
             return count;
-        }
-        public static void TryCreateDirectory(string path)
-        {
-            if (string.IsNullOrEmpty(path))
-            {
-                Debug.Log("Path is null!");
-                return;
-            }
-            if (!Directory.Exists(path))
-                Directory.CreateDirectory(path);
-        }
-
-        private List<string> GetSceneNames(PlatformSettings platformSetting, StoreSettings storeSetting)
-        {
-            List<SceneOrder> sceneOrders = new List<SceneOrder>();
-            sceneOrders.AddRange(scenes);
-            sceneOrders.AddRange(storeSetting.extraScenes);
-            sceneOrders.AddRange(platformSetting.extraScenes);
-
-            return GetSceneNames(sceneOrders);
-        }
-        private List<string> GetSceneNames(List<SceneOrder> sceneOrders)
-        {
-            List<string> sceneNames = new List<string>();
-            if (sceneOrders == null)
-            {
-                return sceneNames;
-            }
-            sceneOrders = sceneOrders.OrderBy(x => x.order).ToList();
-            foreach (SceneOrder sceneOrder in sceneOrders)
-            {
-                string path = AssetDatabase.GetAssetPath(sceneOrder.scene);
-                sceneNames.Add(path);
-            }
-            return sceneNames;
         }
     }
 }

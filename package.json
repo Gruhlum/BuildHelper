@@ -1,6 +1,6 @@
 {
   "name": "com.hextecgames.buildhelper",
-  "version": "1.3.6",
+  "version": "2.0.0",
   "displayName": "BuildHelper",
   "description": "Package for automating the build process",
   "unity": "2019.1",

@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adc9e9065bafc23479cdf6bdf24bf9f5, type: 3}
+  m_Name: Steam
+  m_EditorClassIdentifier: 
+  include: 1
+  createZip: 1
+  settingOverrides:
+  - rid: 445256656337502217
+  tasks: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 445256656337502217
+      type: {class: SceneOverride, ns: HexTecGames.BuildHelper.Editor, asm: HexTecGames.BuildHelper.Editor}
+      data:
+        scenes:
+        - scene: {fileID: 102900000, guid: a12687c88cbf2de468e6e9417862c0ec, type: 3}
+          order: -1
+        mergeMode: 0

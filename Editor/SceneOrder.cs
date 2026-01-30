@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -9,5 +10,6 @@ namespace HexTecGames.BuildHelper.Editor
         public SceneAsset scene;
         [Tooltip("from low to high")]
         public int order;
+
     }
 }
