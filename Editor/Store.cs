@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using HexTecGames.Basics;
 using UnityEditor;
-using UnityEditor.Build.Reporting;
 using UnityEngine;
 
 namespace HexTecGames.BuildHelper.Editor
@@ -33,21 +32,20 @@ namespace HexTecGames.BuildHelper.Editor
             return name;
         }
 
-        internal void OnBeforeBuild(BuildData buildData)
+        public void OnBeforeBuild(BuildData buildData)
         {
             foreach (var settingOverride in settingOverrides)
             {
-                settingOverride.ApplyBeforeBuild(buildData,  buildData.store == this);
+                settingOverride.ApplyBeforeBuild(buildData, buildData.store == this);
             }
         }
 
-        internal void OnAfterBuild(BuildData buildData, bool success)
+        public void OnAfterBuild(BuildData buildData, bool success)
         {
             if (success && createZip)
             {
                 ZipHelper.CreateZipFile(buildData.storePath);
             }
-
             foreach (var settingOverride in settingOverrides)
             {
                 settingOverride.ApplyAfterBuild(buildData, success);

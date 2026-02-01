@@ -10,8 +10,7 @@
   "samples": [
     {
       "displayName": "Sample",
-      "description": "Contains example Setting",
-      "path": "Sample"
+      "path": "Samples~"
     }
   ],
   "dependencies": {

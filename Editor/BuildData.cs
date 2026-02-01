@@ -36,8 +36,8 @@ namespace HexTecGames.BuildHelper.Editor
             this.scenes = scenes;
             this.storePath = storePath;
             this.buildOptions = buildOptions;
-            platformTarget = platform.buildTarget;
-            fileName = platform.buildTarget.GetFileName(platform, store, versionType);
+            platformTarget = platform.platformTarget;
+            fileName = platform.platformTarget.GetFileName(platform, store, versionType);
             filePath = platformTarget.GetFilePath(storePath, fileName);
         }
 

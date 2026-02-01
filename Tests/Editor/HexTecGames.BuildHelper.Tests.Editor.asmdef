@@ -1,0 +1,19 @@
+{
+    "name": "HexTecGames.BuildHelper.Tests.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:a27d4c6412ea98046ba79967d944e0c5",
+        "GUID:4b15c8b473153fd48b7d58c11fe5b50f"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

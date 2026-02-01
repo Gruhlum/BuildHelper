@@ -15,7 +15,7 @@ using Debug = UnityEngine.Debug;
 namespace HexTecGames.BuildHelper.Editor
 {
 
-    [CreateAssetMenu(fileName = "BuildSettings", menuName = "HexTecGames/Editor/BuildHelper/BuildSettings")]
+    [CreateAssetMenu(fileName = nameof(BuildSettings), menuName = "HexTecGames/Editor/BuildHelper/BuildSettings")]
     public class BuildSettings : ScriptableObject
     {
         public string gameName;
@@ -29,21 +29,56 @@ namespace HexTecGames.BuildHelper.Editor
         public List<SceneOrder> scenes;
 
         [InlineSO(true)]
-        public List<Platform> platforms;
+        private List<Platform> platforms = new List<Platform>();
 
         private List<string> fullBuildPaths = new List<string>();
-        public VersionNumber lastBuildVersion = new VersionNumber(0, 0, 0);
+        private VersionNumber lastBuildVersion = new VersionNumber(0, 0, 0);
 
         public static BuildSettings instance;
-        private const string BUILD_FOLDER_NAME = "Builds";
-        public const string CONFIG_FOLDER_NAME = "BuildHelper";
-        private const string DATA_FILE_NAME = "Data.txt";
-        public const string RESULT_PATH = CONFIG_FOLDER_NAME + "/ExternalBuildResult.txt";
 
-        [SerializeField] private Queue<BuildData> buildDatas = default;
+        private const string DATA_FILE_NAME = "Data.txt";
+        public IBuildPathProvider PathProvider
+        {
+            get
+            {
+                return this.pathProvider;
+            }
+            set
+            {
+                this.pathProvider = value;
+            }
+        }
+        [NonSerialized] private IBuildPathProvider pathProvider = new DefaultBuildPathProvider();
+
+
+        private Queue<BuildData> buildDatas = default;
         private string oldProductName;
         private VersionNumber oldVersion;
         private event Action<string> OnBuildEnded;
+        private static readonly string projectRoot = Directory.GetCurrentDirectory();
+
+        public List<Platform> Platforms
+        {
+            get
+            {
+                return this.platforms;
+            }
+            private set
+            {
+                this.platforms = value;
+            }
+        }
+        public VersionNumber LastBuildVersion
+        {
+            get
+            {
+                return this.lastBuildVersion;
+            }
+            set
+            {
+                this.lastBuildVersion = value;
+            }
+        }
 
         private void OnValidate()
         {
@@ -59,12 +94,15 @@ namespace HexTecGames.BuildHelper.Editor
         private void OnEnable()
         {
             Debug.Log("OnEnable!");
-            LoadLastBuildVersion();
+            if (LastBuildVersion == null)
+            {
+                LoadLastBuildVersion();
+            }
         }
         private Queue<BuildData> CreateAllBuildDatas()
         {
             Queue<BuildData> buildDatas = new Queue<BuildData>();
-            foreach (var platform in platforms)
+            foreach (var platform in Platforms)
             {
                 if (!platform.include)
                 {
@@ -113,14 +151,14 @@ namespace HexTecGames.BuildHelper.Editor
 
         private void SaveLastBuildVersion()
         {
-            FileManager.WriteToFile(CONFIG_FOLDER_NAME, DATA_FILE_NAME, lastBuildVersion.ToString());
+            FileManager.WriteToFile(PathProvider.ConfigFolder, DATA_FILE_NAME, LastBuildVersion.ToString());
         }
         private void LoadLastBuildVersion()
         {
-            if (FileManager.FileExists(CONFIG_FOLDER_NAME, DATA_FILE_NAME))
+            if (FileManager.FileExists(PathProvider.ConfigFolder, DATA_FILE_NAME))
             {
-                var result = FileManager.ReadFile(CONFIG_FOLDER_NAME, DATA_FILE_NAME);
-                lastBuildVersion = new VersionNumber(result[0]);
+                var result = FileManager.ReadFile(PathProvider.ConfigFolder, DATA_FILE_NAME);
+                LastBuildVersion = new VersionNumber(result[0]);
             }
         }
         private void AfterBuildsComplete(bool success)
@@ -133,31 +171,34 @@ namespace HexTecGames.BuildHelper.Editor
             fullBuildPaths.Clear();
             if (success)
             {
-                lastBuildVersion = VersionNumber.GetVersionNumber();
+                LastBuildVersion = VersionNumber.GetVersionNumber();
             }
             SaveLastBuildVersion();
         }
 
+        private void CreateDirectory(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+        }
+
         private void RunExternalBuild(BuildData buildData)
         {
-            string configPath = "BuildHelper/ExternalBuildConfig.json";
-            Directory.CreateDirectory(CONFIG_FOLDER_NAME);
-            File.WriteAllText(configPath, JsonUtility.ToJson(buildData));
+            CreateDirectory(PathProvider.ConfigFolder);
+            File.WriteAllText(PathProvider.ConfigFolder, JsonUtility.ToJson(buildData));
 
-            if (File.Exists(RESULT_PATH))
-            {
-                File.Delete(RESULT_PATH);
-            }
+            File.Delete(PathProvider.ResultPath);
 
             string unityExe = EditorApplication.applicationPath;
-            string projectPath = Directory.GetCurrentDirectory();
 
             var args =
                 "-batchmode " +
                 "-quit " +
-                $"-projectPath \"{projectPath}\" " +
+                $"-projectPath \"{projectRoot}\" " +
                 $"-executeMethod HexTecGames.BuildHelper.Editor.ExternalBuilder.PerformBuild " +
-                $"-configPath \"{configPath}\"";
+                $"-configPath \"{PathProvider.ConfigPath}\"";
 
             Debug.Log("Starting External Builder");
 
@@ -169,7 +210,7 @@ namespace HexTecGames.BuildHelper.Editor
             EditorApplication.update += Check;
             OnBuildEnded -= BuildEnded;
 
-            foreach (var platform in platforms)
+            foreach (var platform in Platforms)
             {
                 platform.OnAfterBuild(buildDatas.Peek(), result.Contains("SUCCESS"));
                 Debug.Log("Successfully build: " + buildDatas.Peek().ToString());
@@ -188,7 +229,7 @@ namespace HexTecGames.BuildHelper.Editor
             bool anySuccess = false;
             foreach (var buildData in buildDatas)
             {
-                foreach (var platform in platforms)
+                foreach (var platform in Platforms)
                 {
                     platform.OnBeforeBuild(buildData);
                 }
@@ -202,7 +243,7 @@ namespace HexTecGames.BuildHelper.Editor
                     fullBuildPaths.Add(buildData.GetPlatformPath());
                     anySuccess = true;
                 }
-                foreach (var platform in platforms)
+                foreach (var platform in Platforms)
                 {
                     platform.OnAfterBuild(buildData, success);
                 }
@@ -223,7 +264,7 @@ namespace HexTecGames.BuildHelper.Editor
         }
         private void BuildExternal(BuildData buildData)
         {
-            foreach (var platform in platforms)
+            foreach (var platform in Platforms)
             {
                 platform.OnBeforeBuild(buildData);
             }
@@ -233,10 +274,10 @@ namespace HexTecGames.BuildHelper.Editor
         }
         private void Check()
         {
-            if (File.Exists(RESULT_PATH))
+            if (File.Exists(PathProvider.ResultPath))
             {
                 EditorApplication.update -= Check;
-                string result = File.ReadAllText(RESULT_PATH);
+                string result = File.ReadAllText(PathProvider.ResultPath);
                 OnBuildEnded?.Invoke(result);
             }
         }
@@ -244,14 +285,13 @@ namespace HexTecGames.BuildHelper.Editor
         private string CreatePath(Platform activePlatform, Store activeStore)
         {
             string path = GetApplicationPath(activePlatform, activeStore);
-            Directory.CreateDirectory(path);
+            CreateDirectory(path);
             return path;
         }
         public void OpenBuildFolder()
         {
-            string buildFolderPath = Path.Combine(Directory.GetCurrentDirectory(), BUILD_FOLDER_NAME);
-            Directory.CreateDirectory(buildFolderPath);
-            Process.Start(buildFolderPath);
+            CreateDirectory(PathProvider.BuildsFolder);
+            Process.Start(PathProvider.BuildsFolder);
         }
         private void TryOpeningBuildFolder()
         {
@@ -267,11 +307,7 @@ namespace HexTecGames.BuildHelper.Editor
         private string GetApplicationPath(Platform platform, Store store)
         {
             //ProjectName/Builds/Platform/Platform_Store_0.0.0
-            return Path.Combine(
-                Directory.GetCurrentDirectory(),
-                BUILD_FOLDER_NAME,
-                platform.buildTarget.Name,
-                GetApplicationFolderName(platform, store));
+            return Path.Combine(PathProvider.BuildsFolder, platform.platformTarget.Name, GetApplicationFolderName(platform, store));
         }
 
         private string GetApplicationFolderName(Platform platform, Store store)
@@ -283,7 +319,7 @@ namespace HexTecGames.BuildHelper.Editor
             }
             else versionSuffix = GetVersionString();
 
-            return $"{Application.productName}_{platform.buildTarget.Name}_{store.name}_{versionSuffix}";
+            return $"{Application.productName}_{platform.platformTarget.Name}_{store.name}_{versionSuffix}";
         }
 
         public string GetVersionString()
@@ -294,12 +330,7 @@ namespace HexTecGames.BuildHelper.Editor
         {
             int count = 0;
 
-            if (platforms == null)
-            {
-                return 0;
-            }
-
-            foreach (Platform platform in platforms)
+            foreach (Platform platform in Platforms)
             {
                 if (platform == null || platform.Stores == null)
                 {
@@ -319,12 +350,7 @@ namespace HexTecGames.BuildHelper.Editor
         {
             int count = 0;
 
-            if (platforms == null)
-            {
-                return 0;
-            }
-
-            foreach (Platform platform in platforms)
+            foreach (Platform platform in Platforms)
             {
                 if (platform == null || platform.Stores == null)
                 {

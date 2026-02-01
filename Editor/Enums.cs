@@ -1,4 +1,4 @@
 namespace HexTecGames.BuildHelper.Editor
 {
-    public enum VersionType { Full, Demo }
+    public enum VersionType { Release, Demo }
 }

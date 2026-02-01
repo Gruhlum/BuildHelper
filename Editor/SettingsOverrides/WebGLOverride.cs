@@ -11,7 +11,7 @@ namespace HexTecGames.BuildHelper.Editor
     {
         protected override bool IsValid(Platform platform)
         {
-            return platform.buildTarget is WebGLTarget;
+            return platform.platformTarget is WebGLTarget;
         }
         protected override string GetInvalidMessage()
         {

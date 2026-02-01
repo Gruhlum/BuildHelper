@@ -14,7 +14,7 @@ namespace HexTecGames.BuildHelper.Editor
 
             if (string.IsNullOrEmpty(configPath))
             {
-                File.WriteAllText(BuildSettings.RESULT_PATH, "FAILURE");
+                File.WriteAllText(BuildPaths.RESULT_PATH, "FAILURE");
                 return;
             }
 
@@ -25,7 +25,7 @@ namespace HexTecGames.BuildHelper.Editor
 
             BuildPipeline.BuildPlayer(buildData.GenerateBuildPlayerOptions());
 
-            File.WriteAllText(BuildSettings.RESULT_PATH, "SUCCESS");
+            File.WriteAllText(BuildPaths.RESULT_PATH, "SUCCESS");
             Debug.Log("External build finished");
         }
 

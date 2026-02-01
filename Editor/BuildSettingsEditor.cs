@@ -34,7 +34,7 @@ namespace HexTecGames.BuildHelper.Editor
                 
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label($"Version: {buildSettings.lastBuildVersion} -> {buildSettings.GetVersionString()}");
+            GUILayout.Label($"Version: {buildSettings.LastBuildVersion} -> {buildSettings.GetVersionString()}");
             GUILayout.Label($"Builds Active: {totalActiveBuilds}/{buildSettings.GetTotalBuilds()}");
             GUILayout.EndHorizontal();
 

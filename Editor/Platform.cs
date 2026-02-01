@@ -12,7 +12,7 @@ namespace HexTecGames.BuildHelper.Editor
     {
         [InlineSOField] public bool include;
 
-        [SerializeReference, SubclassSelector] public PlatformTarget buildTarget;
+        [SerializeReference, SubclassSelector] public PlatformTarget platformTarget;
         [Tooltip("File ending of executable, e.g.: (Windows:.exe, Linux:.x86_64 or empty for OSX")]
         public string fileEnding;
 
@@ -22,10 +22,12 @@ namespace HexTecGames.BuildHelper.Editor
             {
                 return stores;
             }
+            set
+            {
+                stores = value;
+            }
         }
-        [InlineSO(true)]
-        [InlineSOField]
-        [SerializeField]
+        [InlineSO(true)][InlineSOField][SerializeField]
         private List<Store> stores;
 
         [SubclassSelector, SerializeReference] public List<SettingOverride> settingOverrides = new List<SettingOverride>();
@@ -38,11 +40,11 @@ namespace HexTecGames.BuildHelper.Editor
 
         private void CheckFileEnding()
         {
-            if (buildTarget == null)
+            if (platformTarget == null)
             {
                 fileEnding = string.Empty;
             }
-            else fileEnding = buildTarget.FileEnding;
+            else fileEnding = platformTarget.FileEnding;
         }
 
         public void OnBeforeBuild(BuildData buildData)
@@ -72,11 +74,11 @@ namespace HexTecGames.BuildHelper.Editor
 
         public override string ToString()
         {
-            if (buildTarget == null)
+            if (platformTarget == null)
             {
                 return "No Build Target";
             }
-            else return buildTarget.Name;
+            else return platformTarget.Name;
         }
     }
 }

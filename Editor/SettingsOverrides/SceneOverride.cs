@@ -13,7 +13,6 @@ namespace HexTecGames.BuildHelper.Editor
 
         private enum MergeMode { Add, Set }
 
-
         public override void ApplyBeforeBuild(BuildData buildData, bool isActive)
         {
             if (!isActive)
